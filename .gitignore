@@ -1,0 +1,29 @@
+# Client
+client/node_modules/
+client/dist/
+client/.env.local
+client/.env.*.local
+
+# Server
+server/.env
+server/.venv/
+server/venv/
+server/__pycache__/
+server/*.pyc
+server/*.pyo
+server/*.pyd
+server/.Python
+server/db.sqlite3
+server/media/
+server/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db

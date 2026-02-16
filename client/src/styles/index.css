@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  /* Backgrounds */
+  --color-background: #f1ead7; /* main app background */
+  --color-surface: #f6f1e3; /* subtle section background */
+  --color-card: #f6f1e3; /* warm card color */
+
+  /* Text */
+  --color-foreground: #0d1b2a;
+  --color-muted-foreground: #6b7280;
+
+  /* Brand (Buttons) */
+  --color-primary: #3d2813; /* leather brown */
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #6b4a2d; /* lighter brown hover */
+  --color-secondary-foreground: #ffffff;
+
+  /* UI */
+  --color-muted: #e8dac5;
+  --color-border: #e0d6bf;
+
+  /* Accent */
+  --color-highlight: #facc15;
+
+  /* Shape */
+  --radius: 0.75rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: "Inter", sans-serif;
+  }
+
+  .font-serif {
+    font-family: "Playfair Display", serif;
+  }
+  .card {
+    background-color: var(--color-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    padding: 0.7rem;
+    color: var(--color-foreground);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); /* slightly deeper shadow */
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition:
+      background-color 0.2s ease,
+      transform 0.1s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-secondary);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+}
