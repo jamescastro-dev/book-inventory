@@ -3,6 +3,7 @@ Django settings for book_inventory project (Production-ready).
 """
 from pathlib import Path
 import os
+import dj_database_url  # pyright: ignore[reportMissingImports]
 from datetime import timedelta
 from dotenv import load_dotenv  # pyright: ignore[reportMissingImports]
 
@@ -22,7 +23,7 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS",
-    "localhost,127.0.0.1"  # add your production host in the .env
+    "localhost,127.0.0.1,.onrender.com"
 ).split(",")
 
 # ==============================
@@ -82,16 +83,29 @@ WSGI_APPLICATION = 'book_inventory.wsgi.application'
 # ==============================
 # DATABASE
 # ==============================
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    # Production (Render)
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    # Local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
+    }
 
 # ==============================
 # PASSWORD VALIDATION
