@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 
-    'api',
-    'accounts',
+    'book_inventory.api',
+    'book_inventory.accounts',
 ]
 
 # ==============================
@@ -61,7 +61,7 @@ MIDDLEWARE = [
 # ==============================
 # URLS / WSGI
 # ==============================
-ROOT_URLCONF = 'book_inventory.urls'
+ROOT_URLCONF = 'book_inventory.book_inventory.urls'
 
 TEMPLATES = [
     {
@@ -78,7 +78,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'book_inventory.wsgi.application'
+WSGI_APPLICATION = 'book_inventory.book_inventory.wsgi.application'
 
 # ==============================
 # DATABASE
