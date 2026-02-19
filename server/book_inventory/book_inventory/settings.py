@@ -3,16 +3,20 @@ Django settings for book_inventory project (Production-ready).
 """
 from pathlib import Path
 import os
-import dj_database_url # pyright: ignore[reportMissingImports]
+import dj_database_url
 from datetime import timedelta
 from dotenv import load_dotenv
 
-load_dotenv()  # Load local .env if exists (development only)
+load_dotenv()
 
 # ==============================
 # BASE DIR
 # ==============================
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# settings.py is at server/book_inventory/book_inventory/settings.py
+# .parent       = server/book_inventory/book_inventory/
+# .parent.parent = server/book_inventory/
+# .parent.parent.parent = server/   ← this is BASE_DIR
 
 # ==============================
 # SECURITY
@@ -46,7 +50,8 @@ INSTALLED_APPS = [
 # ==============================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # must be high
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,16 +89,13 @@ WSGI_APPLICATION = 'book_inventory.book_inventory.wsgi.application'
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    # Production (Render)
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True
         )
     }
 else:
-    # Local development / fallback
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -124,6 +126,7 @@ USE_TZ = True
 # ==============================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -152,7 +155,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',  # change to AllowAny for dev
+        'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
@@ -163,7 +166,6 @@ SIMPLE_JWT = {
 }
 
 # ==============================
-# EMAIL (Optional for Render / Production)
+# EMAIL
 # ==============================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # dev
-# For production: use SMTP service and env variables
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
