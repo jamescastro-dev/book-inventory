@@ -15,7 +15,7 @@ const BooksPage = () => {
   const location = useLocation();
 
   // Base API URL from .env
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_BOOKS_URL;
   const accessToken = localStorage.getItem("access_token"); // for auth if needed
 
   // Fetch books from backend
