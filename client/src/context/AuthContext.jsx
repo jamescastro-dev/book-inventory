@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL; //backed api base url from .env
+  const API_URL = import.meta.env.VITE_API_URL; //backend api base url from .env
 
   // Initialize auth state from localStorage
   useEffect(() => {

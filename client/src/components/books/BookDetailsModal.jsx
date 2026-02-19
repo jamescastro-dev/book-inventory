@@ -33,7 +33,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, children }) => {
           <img
             src={
               book.image
-                ? `http://127.0.0.1:8000${book.image}`
+                ? `${import.meta.env.VITE_API_URL}${book.image}`
                 : "https://placehold.co/600x400/png"
             }
             alt={book.title}
