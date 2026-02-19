@@ -14,15 +14,16 @@ const BooksPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
 
-  // Base API URL from .env
   const API_URL = import.meta.env.VITE_API_BOOKS_URL;
-  const accessToken = localStorage.getItem("access_token"); // for auth if needed
 
   // Fetch books from backend
   const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/books/`);
+      const accessToken = localStorage.getItem("access_token"); // ← moved inside
+      const res = await fetch(`${API_URL}/books/`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
       if (!res.ok) throw new Error("Failed to fetch books");
       const data = await res.json();
       setBooks(data);
@@ -49,9 +50,10 @@ const BooksPage = () => {
   // Update book
   const updateBook = async (id, updatedBook) => {
     try {
+      const accessToken = localStorage.getItem("access_token");
       const res = await fetch(`${API_URL}/books/${id}/`, {
         method: "PUT",
-        body: updatedBook, // updatedBook is already FormData from BookEditModal
+        body: updatedBook,
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       });
 
@@ -68,13 +70,14 @@ const BooksPage = () => {
     } catch (err) {
       console.error(err);
       setError("Failed to update book.");
-      fetchBooks(); // rollback
+      fetchBooks();
     }
   };
 
   // Delete book
   const deleteBook = async (id) => {
     try {
+      const accessToken = localStorage.getItem("access_token");
       setBooks((prev) => prev.filter((b) => b.id !== id));
       const res = await fetch(`${API_URL}/books/${id}/`, {
         method: "DELETE",
@@ -98,31 +101,25 @@ const BooksPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-5">
-      {/* Title */}
       <h2 className="text-4xl font-serif font-semibold mb-4 text-(--color-foreground) text-center pb-1">
         List of Books
       </h2>
 
-      {/* Search Bar */}
       <SearchBar
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-      {/* Error */}
       {error && <p className="text-red-600 text-center mb-4">{error}</p>}
 
-      {/* Success */}
       {success && (
         <p className="text-green-600 text-center mb-4 font-medium">{success}</p>
       )}
 
-      {/* Loading */}
       {loading && (
         <p className="text-gray-500 text-center mb-4">Loading books...</p>
       )}
 
-      {/* Book Grid */}
       {filteredBooks.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
           {filteredBooks.map((book) => (
@@ -144,7 +141,6 @@ const BooksPage = () => {
         )
       )}
 
-      {/* Details Modal */}
       {selectedBook && (
         <BookDetailsModal
           book={selectedBook}

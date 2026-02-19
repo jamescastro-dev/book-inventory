@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_AUTH_URL; //backend api base url from .env
+  const API_URL = import.meta.env.VITE_API_AUTH_URL;
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -41,9 +41,15 @@ export const AuthProvider = ({ children }) => {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      localStorage.setItem("access_token", res.data.access);
-      setUser(res.data.user);
-      navigate("/books"); // redirect after login
+      const token = res.data.access;
+      localStorage.setItem("access_token", token);
+
+      // Fetch user info after login
+      const meRes = await axios.get(`${API_URL}/me/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(meRes.data);
+      navigate("/books");
     } catch (err) {
       setError(err.response?.data?.detail || "Login failed");
     }
