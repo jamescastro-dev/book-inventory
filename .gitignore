@@ -1,11 +1,13 @@
 # Client
 client/node_modules/
 client/dist/
+client/.env
 client/.env.local
 client/.env.*.local
 
 # Server
 server/.env
+server/book_inventory/.env
 server/.venv/
 server/venv/
 server/__pycache__/
