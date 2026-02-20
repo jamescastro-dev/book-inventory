@@ -4,6 +4,7 @@ Django settings for book_inventory project (Production-ready).
 from pathlib import Path
 import os
 import dj_database_url
+import cloudinary
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -36,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',       
     'django.contrib.staticfiles',
+    'cloudinary',               
 
     'rest_framework',
     'corsheaders',
@@ -169,3 +172,14 @@ SIMPLE_JWT = {
 # EMAIL
 # ==============================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# ==============================
+# CLOUDINARY
+# ==============================
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
