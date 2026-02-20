@@ -21,7 +21,7 @@ const BookItem = ({ book, onUpdate, onDelete }) => {
         <img
           src={
             book.image
-              ? `${import.meta.env.VITE_API_URL}${book.image}`
+              ? book.image
               : "https://placehold.co/600x400/png"
           }
           alt={book.title}

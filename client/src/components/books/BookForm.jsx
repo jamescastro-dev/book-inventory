@@ -14,7 +14,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   // Show existing image if editing
   useEffect(() => {
     if (initialData.image) {
-      setPreview(`${import.meta.env.VITE_API_URL}${initialData.image}`);
+      setPreview(initialData.image);
     }
   }, [initialData.image]);
 

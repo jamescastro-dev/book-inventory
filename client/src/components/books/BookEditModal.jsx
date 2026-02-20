@@ -20,7 +20,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
       setReleaseYear(book.release_year || "");
       setDescription(book.description || "");
       setImage(null);
-      setPreview(book.image ? `${import.meta.env.VITE_API_URL}${book.image}` : "");
+      setPreview(book.image ? book.image : "");
     }
   }, [book]);
 
