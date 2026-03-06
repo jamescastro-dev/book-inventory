@@ -32,32 +32,13 @@
   --shadow-md: 0 6px 20px rgba(44, 26, 14, 0.12), 0 2px 6px rgba(44, 26, 14, 0.08);
 }
 
-/* ── Dark mode ────────────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-background:        #0f0d0b;
-    --color-surface:           #171310;
-    --color-card:              #1e1a16;
-    --color-foreground:        #f0e6d4;
-    --color-muted-foreground:  #8a7460;
-    --color-primary:            #c9952a;
-    --color-primary-hover:      #e0a820;
-    --color-primary-foreground: #1a0f07;
-    --color-muted:              #2a2218;
-    --color-border:             #2e2620;
-    --color-border-strong:      #4a3e32;
-    --color-gold:               #e8b84b;
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
-    --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
-  }
-}
-
+/* ── Dark mode — only when manually toggled ───────────────── */
 [data-theme="dark"] {
-  --color-background:        #0f0d0b;
-  --color-surface:           #171310;
-  --color-card:              #1e1a16;
-  --color-foreground:        #f0e6d4;
-  --color-muted-foreground:  #8a7460;
+  --color-background:         #0f0d0b;
+  --color-surface:            #171310;
+  --color-card:               #1e1a16;
+  --color-foreground:         #f0e6d4;
+  --color-muted-foreground:   #8a7460;
   --color-primary:            #c9952a;
   --color-primary-hover:      #e0a820;
   --color-primary-foreground: #1a0f07;
