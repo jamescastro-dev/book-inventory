@@ -2,30 +2,28 @@ import { Search } from "lucide-react";
 
 const SearchBar = ({ value, onChange }) => {
   return (
-    <div className="mb-6 flex justify-center">
+    <div className="flex justify-center">
       <div className="relative w-full max-w-md">
-        {/* Search icon */}
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-          <Search className="w-5 h-5 text-(--color-muted-foreground)" />
-        </div>
-
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-muted-foreground) pointer-events-none"
+        />
         <input
           type="text"
-          placeholder="Search by title or author..."
+          placeholder="Search by title or author…"
           value={value}
           onChange={onChange}
           className="
             w-full
             bg-(--color-surface)
-            border border-(--color-primary)
+            border border-(--color-border)
             text-(--color-foreground)
-            rounded-md
-            pl-4 pr-10 py-2
+            rounded-(--radius)
+            pl-9 pr-4 py-2 text-sm
             shadow-sm
-            focus:outline-none
-            focus:ring-1 focus:ring-(--color-primary)
+            transition-colors duration-150
+            hover:border-(--color-border-strong)
+            focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
             placeholder:text-(--color-muted-foreground)
-            transition-colors
           "
         />
       </div>

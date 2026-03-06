@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { ImagePlus } from "lucide-react";
 
 export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [title, setTitle] = useState(initialData.title || "");
   const [author, setAuthor] = useState(initialData.author || "");
   const [genre, setGenre] = useState(initialData.genre || "");
-  const [releaseYear, setReleaseYear] = useState(
-    initialData.release_year || "",
-  );
+  const [releaseYear, setReleaseYear] = useState(initialData.release_year || "");
   const [description, setDescription] = useState(initialData.description || "");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
 
-  // Show existing image if editing
   useEffect(() => {
-    if (initialData.image) {
-      setPreview(initialData.image);
-    }
+    if (initialData.image) setPreview(initialData.image);
   }, [initialData.image]);
 
-  // Update preview on new image select
   useEffect(() => {
     if (!image) return;
     const objectUrl = URL.createObjectURL(image);
@@ -41,25 +36,37 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
     onAdd(formData);
 
     if (!initialData.id) {
-      setTitle("");
-      setAuthor("");
-      setGenre("");
-      setReleaseYear("");
-      setDescription("");
-      setImage(null);
-      setPreview("");
+      setTitle(""); setAuthor(""); setGenre("");
+      setReleaseYear(""); setDescription("");
+      setImage(null); setPreview("");
     }
   };
 
+  const fields = [
+    { label: "Title",        value: title,       set: setTitle,       type: "text",   required: true  },
+    { label: "Author",       value: author,      set: setAuthor,      type: "text",   required: true  },
+    { label: "Genre",        value: genre,       set: setGenre,       type: "text",   required: false },
+    { label: "Release Year", value: releaseYear, set: setReleaseYear, type: "number", required: true  },
+  ];
+
   return (
-    <div className="flex justify-center px-4">
+    <div className="flex justify-center">
       <form
         onSubmit={handleSubmit}
-        className="relative bg-(--color-surface) rounded-lg shadow-lg w-full max-w-4xl lg:min-w-4xl p-4 md:p-6 border border-(--color-border)">
-        {/* Layout */}
+        className="bg-(--color-surface) border border-(--color-border) rounded-(--radius) shadow-sm w-full p-5 md:p-7"
+      >
         <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-          {/* LEFT: Image Upload */}
-          <div className="w-full lg:w-90 flex flex-col justify-center items-center border border-(--color-muted-foreground) rounded p-4 cursor-pointer bg-(--color-card) relative h-64 lg:h-auto">
+
+          {/* Image upload */}
+          <label className="
+            relative w-full lg:w-72 shrink-0
+            flex flex-col items-center justify-center
+            border border-dashed border-(--color-border)
+            rounded-(--radius) overflow-hidden
+            bg-(--color-card) cursor-pointer
+            h-64 lg:h-auto
+            hover:border-(--color-gold) transition-colors group
+          ">
             <input
               type="file"
               accept="image/*"
@@ -75,78 +82,94 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
               <img
                 src={preview}
                 alt="Preview"
-                className="w-full h-full object-cover rounded shadow-sm"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="text-(--color-muted-foreground) text-center flex items-center justify-center w-full h-full px-2">
-                Tap to select image
+              <div className="flex flex-col items-center gap-2 text-(--color-muted-foreground) group-hover:text-(--color-gold) transition-colors px-4 text-center">
+                <ImagePlus className="w-8 h-8 opacity-50" />
+                <span className="text-sm">Click to upload cover</span>
               </div>
             )}
 
+            {/* Filename badge */}
             {image && (
-              <p className="text-sm text-(--color-foreground) truncate w-full text-center mt-2 px-1">
-                {image.name}
-              </p>
+              <div className="absolute bottom-0 inset-x-0 bg-(--color-primary)/80 px-3 py-1.5">
+                <p className="text-xs text-(--color-primary-foreground) truncate text-center">
+                  {image.name}
+                </p>
+              </div>
             )}
-          </div>
+          </label>
 
-          {/* RIGHT: Form Fields */}
+          {/* Fields */}
           <div className="flex-1 flex flex-col gap-4">
-            {["Title", "Author", "Genre", "Release Year"].map((label, idx) => {
-              const stateMap = {
-                Title: [title, setTitle],
-                Author: [author, setAuthor],
-                Genre: [genre, setGenre],
-                "Release Year": [releaseYear, setReleaseYear],
-              };
-              const [value, setValue] = stateMap[label];
-
-              return (
-                <div key={idx} className="flex flex-col gap-1">
-                  <label className="text-(--color-foreground) font-medium">
-                    {label}
-                  </label>
-                  <input
-                    type={label === "Release Year" ? "number" : "text"}
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder={label}
-                    className="border border-(--color-muted-foreground) px-4 py-2 rounded w-full bg-(--color-card) text-(--color-foreground) focus:outline-none focus:ring-1 focus:ring-(--color-primary) focus:border-(--color-primary) transition-colors"
-                  />
-                </div>
-              );
-            })}
+            {fields.map(({ label, value, set, type, required }) => (
+              <div key={label} className="flex flex-col gap-1">
+                <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
+                  {label}
+                  {required && <span className="text-(--color-gold) ml-0.5">*</span>}
+                </label>
+                <input
+                  type={type}
+                  value={value}
+                  onChange={(e) => set(e.target.value)}
+                  placeholder={label}
+                  required={required}
+                  className="
+                    bg-(--color-card) border border-(--color-border)
+                    text-(--color-foreground) text-sm
+                    rounded-(--radius) px-3.5 py-2
+                    placeholder:text-(--color-muted-foreground)
+                    hover:border-(--color-border-strong)
+                    focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
+                    transition-colors
+                  "
+                />
+              </div>
+            ))}
 
             {/* Description */}
             <div className="flex flex-col gap-1">
-              <label className="text-(--color-foreground) font-medium">
+              <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
                 Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description"
+                placeholder="A short description…"
                 rows={5}
-                className="border border-(--color-muted-foreground) px-4 py-2.5 rounded w-full resize-none bg-(--color-card) text-(--color-foreground) focus:outline-none focus:ring-1 focus:ring-(--color-primary) focus:border-(--color-primary) transition-colors"
+                className="
+                  bg-(--color-card) border border-(--color-border)
+                  text-(--color-foreground) text-sm
+                  rounded-(--radius) px-3.5 py-2.5 resize-none
+                  placeholder:text-(--color-muted-foreground)
+                  hover:border-(--color-border-strong)
+                  focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
+                  transition-colors
+                "
               />
             </div>
           </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6 pt-5 border-t border-(--color-border)">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="w-full sm:w-auto bg-(--color-muted) text-(--color-foreground) px-4 py-2 rounded hover:bg-(--color-card) transition-colors">
+              className="w-full sm:w-auto px-4 py-2 text-sm rounded-(--radius) font-medium
+                bg-(--color-muted) text-(--color-foreground)
+                hover:bg-(--color-border) transition-colors"
+            >
               Cancel
             </button>
           )}
           <button
             type="submit"
-            className="w-full sm:w-auto bg-(--color-primary) text-(--color-primary-foreground) px-4 py-2 rounded hover:bg-(--color-secondary) transition-colors">
-            {initialData?.id ? "Save" : "Add Book"}
+            className="btn-primary w-full sm:w-auto text-sm"
+          >
+            {initialData?.id ? "Save Changes" : "Add Book"}
           </button>
         </div>
       </form>
