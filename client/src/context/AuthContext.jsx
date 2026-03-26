@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
       axios
         .get(`${API_URL}/me/`, {
           headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000,
         })
         .then((res) => setUser(res.data))
         .catch(() => {
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post(
         `${API_URL}/login/`,
         { username, password },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, timeout: 15000 }
       );
 
       const token = res.data.access;
@@ -47,11 +48,16 @@ export const AuthProvider = ({ children }) => {
       // Fetch user info after login
       const meRes = await axios.get(`${API_URL}/me/`, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
       });
       setUser(meRes.data);
       navigate("/books");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed");
+      if (err.code === "ECONNABORTED") {
+        setError("Server is warming up, please try again in a moment.");
+      } else {
+        setError(err.response?.data?.detail || "Login failed");
+      }
     }
   };
 

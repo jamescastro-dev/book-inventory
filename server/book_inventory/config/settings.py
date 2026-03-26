@@ -14,9 +14,9 @@ load_dotenv()
 # BASE DIR
 # ==============================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-# settings.py is at server/book_inventory/book_inventory/settings.py
-# .parent       = server/book_inventory/book_inventory/
-# .parent.parent = server/book_inventory/
+# settings.py is at server/book_inventory/config/settings.py
+# .parent        = server/book_inventory/config/
+# .parent.parent  = server/book_inventory/
 # .parent.parent.parent = server/   ← this is BASE_DIR
 
 # ==============================
@@ -66,7 +66,7 @@ MIDDLEWARE = [
 # ==============================
 # URLS / WSGI
 # ==============================
-ROOT_URLCONF = 'book_inventory.book_inventory.urls'
+ROOT_URLCONF = 'book_inventory.config.urls'
 
 TEMPLATES = [
     {
@@ -84,7 +84,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'book_inventory.book_inventory.wsgi.application'
+WSGI_APPLICATION = 'book_inventory.config.wsgi.application'
 
 # ==============================
 # DATABASE
