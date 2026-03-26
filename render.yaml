@@ -3,7 +3,7 @@ services:
     name: book-inventory-backend
     runtime: python
     rootDir: server
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
     startCommand: gunicorn book_inventory.config.wsgi:application
     envVars:
       - key: PYTHON_VERSION
