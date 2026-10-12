@@ -11,12 +11,21 @@ A full-stack web app for managing a personal book collection. Browse and search 
 
 > The demo runs on free hosting tiers. If nobody has used it for a while, the first sign-in can take up to a minute while the server wakes up. The demo data is shared and publicly editable, so it may be reset at any time.
 
+## Screenshots
+
+| | Mobile (390 px) | Desktop |
+|---|---|---|
+| **Sign in** | <img src="docs/screenshots/login-mobile.png" width="220" alt="Sign-in page on a phone, with the demo account box"> | <img src="docs/screenshots/login-desktop.png" width="520" alt="Sign-in page on desktop"> |
+| **Library** | <img src="docs/screenshots/books-mobile.jpg" width="220" alt="Book list on a phone"> | <img src="docs/screenshots/books-desktop.jpg" width="520" alt="Book list on desktop"> |
+| **Book detail** | <img src="docs/screenshots/detail-mobile.jpg" width="220" alt="Book details on a phone"> | <img src="docs/screenshots/detail-desktop.jpg" width="520" alt="Book details on desktop, with Edit and Delete"> |
+
 ## Features
 
 - **Browse and search** the collection, with live filtering by title or author and a match count.
 - **Book details** in a modal: cover, author, genre, release year and description.
 - **Add, edit and delete** books, including cover image upload and a delete confirmation step.
-- **JWT authentication** with a 60-minute access token. Reading books is public; creating, editing and deleting require a valid token and are enforced by the API, not just the UI.
+- **JWT authentication** with a 60-minute access token. Reading books is public; creating, editing and deleting require a valid token and are enforced by the API, not just the UI. Signed-out visitors don't see the Add, Edit or Delete controls, and an expired session sends you back to the sign-in page.
+- **Upload and login limits**: cover images are capped at 5 MB (checked in the browser and again on the server), and sign-in attempts are limited to 5 per minute and 30 per hour per IP address.
 - **Light and dark themes**, remembered between visits.
 - **Responsive layout** that works down to phone width.
 - **Cloud image storage**: covers are uploaded to Cloudinary, so the app server stays stateless.
@@ -41,10 +50,10 @@ Browser ── React SPA (Vercel) ──HTTPS/JSON──> Django REST API (Rende
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `GET` | `/api/books/` | public | List all books |
-| `POST` | `/api/books/create/` | JWT | Create a book (multipart form, optional `image`) |
+| `POST` | `/api/books/create/` | JWT | Create a book (multipart form, optional `image` up to 5 MB) |
 | `PUT` | `/api/books/<id>/` | JWT | Update a book (partial updates allowed) |
 | `DELETE` | `/api/books/<id>/` | JWT | Delete a book |
-| `POST` | `/api/auth/login/` | public | Exchange `username` and `password` for `access` and `refresh` tokens |
+| `POST` | `/api/auth/login/` | public | Exchange `username` and `password` for `access` and `refresh` tokens (rate limited: `429` once the limit is hit) |
 | `POST` | `/api/auth/token/refresh/` | public | Get a new access token from a refresh token |
 | `GET` | `/api/auth/me/` | JWT | Current user |
 | `GET` | `/health/` | public | Liveness check (used by an uptime monitor to keep the free server warm) |
@@ -131,5 +140,6 @@ server/                      Django project
   book_inventory/api/        Book model, REST views, demo_books.json fixture
   book_inventory/accounts/   Login/me endpoints, seed_demo command
   book_inventory/config/     Settings, URLs, WSGI
+docs/screenshots/            Images used in this README
 render.yaml                  Render service definition
 ```
