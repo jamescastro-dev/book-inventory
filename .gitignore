@@ -10,14 +10,19 @@ server/.env
 server/book_inventory/.env
 server/.venv/
 server/venv/
-server/__pycache__/
-server/*.pyc
-server/*.pyo
-server/*.pyd
 server/.Python
-server/db.sqlite3
+server/staticfiles/
+
+# Python bytecode (anywhere in the repo)
+__pycache__/
+*.py[cod]
+
+# Local SQLite databases (anywhere in the repo)
+*.sqlite3
+
+# Uploaded media (MEDIA_ROOT is server/media; the second path is a stray copy)
 server/media/
-server/.DS_Store
+server/book_inventory/media/
 
 # IDE
 .vscode/
