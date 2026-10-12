@@ -69,6 +69,8 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       if (err.code === "ECONNABORTED") {
         setError("Server is warming up, please try again in a moment.");
+      } else if (err.response?.status === 429) {
+        setError("Too many sign-in attempts. Please wait a minute and try again.");
       } else {
         setError(err.response?.data?.detail || "Login failed");
       }

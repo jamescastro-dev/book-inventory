@@ -162,6 +162,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    # Only the login view is throttled (see accounts/throttles.py); tune the limits here.
+    'DEFAULT_THROTTLE_RATES': {
+        'login_burst': '5/min',
+        'login_sustained': '30/hour',
+    },
 }
 
 SIMPLE_JWT = {
