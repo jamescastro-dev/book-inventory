@@ -11,5 +11,10 @@ class Book(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # Without an ordering the database may return rows in any order (Postgres moves
+        # rows around when they are updated), so the list could reshuffle after an edit.
+        ordering = ["id"]
+
     def __str__(self):
         return self.title
