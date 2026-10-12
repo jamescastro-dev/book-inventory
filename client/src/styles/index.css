@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind's `font-serif` utility reads this token. A plain `.font-serif` rule in
+   @layer base loses to the utility, so Cormorant Garamond never applied. */
+@theme {
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+}
+
 :root {
   /* Backgrounds */
   --color-background: #f0e8d5;
@@ -65,10 +71,6 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "DM Sans", sans-serif;
-  }
-
-  .font-serif {
-    font-family: "Cormorant Garamond", serif;
   }
 
   ::selection {
