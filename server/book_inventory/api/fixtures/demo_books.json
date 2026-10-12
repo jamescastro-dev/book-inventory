@@ -1,0 +1,142 @@
+[
+{
+  "model": "api.book",
+  "pk": 1,
+  "fields": {
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "genre": "Fantasy",
+    "release_year": 1937,
+    "description": "Bilbo Baggins, a comfort-loving hobbit, is swept into an epic quest by the wizard Gandalf and a company of thirteen dwarves to reclaim their mountain home from the dragon Smaug. Along the way he discovers courage, resourcefulness, and a mysterious magic ring that will change the world forever. Tolkien's richly imagined Middle-earth comes alive through vivid landscapes and unforgettable characters. This beloved classic laid the foundation for modern fantasy literature.",
+    "image": "media/book_images/the-hobbit-illustrated-by-alan-lee_oojpbm",
+    "created_at": "2026-03-10T08:11:37.309Z",
+    "updated_at": "2026-03-10T08:11:37.309Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 2,
+  "fields": {
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "genre": "Classic Fiction",
+    "release_year": 1960,
+    "description": "Narrated by the young Scout Finch, the novel follows her father Atticus, a principled lawyer in a small Alabama town who agrees to defend a Black man falsely accused of raping a white woman during the racially charged 1930s. Through Scout's innocent eyes, the story explores the deep injustice, hypocrisy, and moral complexity of the American South with both tenderness and unflinching honesty. The mysterious recluse Boo Radley and the quiet heroism of Atticus have become two of the most enduring figures in all of American fiction. It won the Pulitzer Prize in 1961 and has sold more than 45 million copies worldwide.",
+    "image": "media/book_images/to-kill-a-mockingbird-3_iw6c1d",
+    "created_at": "2026-03-10T08:12:47.413Z",
+    "updated_at": "2026-03-10T08:12:47.413Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 3,
+  "fields": {
+    "title": "The Name of the Wind",
+    "author": "Patrick Rothfuss",
+    "genre": "Fantasy",
+    "release_year": 2007,
+    "description": "Kvothe, a legendary figure of myth and magic, narrates the story of his own extraordinary life to a traveling scribe. From his humble beginnings as the son of traveling performers, he rises to become the most notorious wizard of his age. His journey takes him through poverty, loss, and the pursuit of forbidden knowledge at a prestigious university. This is the first volume of the Kingkiller Chronicle, a masterwork of modern fantasy.",
+    "image": "media/book_images/The-Name-of-the-Wind_o2muw7",
+    "created_at": "2026-03-10T08:13:19.634Z",
+    "updated_at": "2026-03-10T08:13:19.634Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 4,
+  "fields": {
+    "title": "Dune",
+    "author": "Frank Herbert",
+    "genre": "Science Fiction",
+    "release_year": 1965,
+    "description": "Set in a distant future, Dune follows young Paul Atreides as his noble family takes control of the desert planet Arrakis, the only source of the most valuable substance in the universe. Betrayal, political intrigue, and survival in a harsh environment shape Paul into something far greater than a mere heir. The story weaves ecology, religion, and power into one of the greatest science fiction epics ever written. It remains the best-selling science fiction novel of all time.",
+    "image": "media/book_images/Dunejpg_so10qk",
+    "created_at": "2026-03-10T08:13:54.628Z",
+    "updated_at": "2026-03-10T08:13:54.628Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 5,
+  "fields": {
+    "title": "Sapiens",
+    "author": "Yuval Noah Harari",
+    "genre": "Non-Fiction",
+    "release_year": 2011,
+    "description": "Harari traces the entire history of humankind from the emergence of Homo sapiens in Africa to the present day. He argues that what sets humans apart is our ability to believe in shared myths — money, nations, religions — that allow mass cooperation on an unprecedented scale. The book challenges readers to question the assumptions behind modern society, progress, and happiness. It is a sweeping, provocative, and brilliantly readable account of how we came to rule the world.",
+    "image": "media/book_images/Sapiens_ollhwb",
+    "created_at": "2026-03-10T08:14:16.950Z",
+    "updated_at": "2026-03-10T08:14:16.950Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 6,
+  "fields": {
+    "title": "Harry Potter and the Sorcerer's Stone",
+    "author": "J.K. Rowling",
+    "genre": "Fantasy",
+    "release_year": 1997,
+    "description": "Harry Potter, an orphan living miserably with his aunt and uncle, discovers on his eleventh birthday that he is a wizard and has been accepted to Hogwarts School of Witchcraft and Wizardry. In the magical world he never knew existed, he finds friendship, belonging, and the truth about his parents' mysterious deaths at the hands of the dark lord Voldemort. Together with his friends Ron and Hermione, Harry uncovers a plot to steal a powerful artifact hidden deep within the school. It is the first chapter of one of the most beloved and widely read fantasy series in the history of literature.",
+    "image": "media/book_images/harry-potter_h2n1gh",
+    "created_at": "2026-03-10T08:14:53.527Z",
+    "updated_at": "2026-03-10T08:14:53.527Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 7,
+  "fields": {
+    "title": "The Alchemist",
+    "author": "Paulo Coelho",
+    "genre": "Fiction",
+    "release_year": 1988,
+    "description": "Santiago, a young Andalusian shepherd, embarks on a journey to find a treasure he has dreamed of, traveling across Spain and the Egyptian desert. Along the way he encounters merchants, Englishmen, and an alchemist who teach him the language of the world and the importance of listening to his heart. Coelho's slim, fable-like novel is a meditation on destiny, courage, and the cost of following one's dreams. It has sold over 65 million copies and been translated into 80 languages.",
+    "image": "media/book_images/The-Alchemist_d5vz0f",
+    "created_at": "2026-03-10T08:15:28.321Z",
+    "updated_at": "2026-03-10T08:15:28.321Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 8,
+  "fields": {
+    "title": "1984",
+    "author": "George Orwell",
+    "genre": "Dystopian Fiction",
+    "release_year": 1949,
+    "description": "Winston Smith lives under the crushing surveillance of Big Brother in a totalitarian society where thought itself is a crime. He secretly rebels by falling in love and seeking the truth buried beneath layers of propaganda and rewritten history. Orwell's vision of a world stripped of privacy, truth, and individual freedom remains one of the most chilling and prophetic novels ever written. Its concepts of doublethink, Newspeak, and the Thought Police have become permanently embedded in modern culture.",
+    "image": "media/book_images/1984_ukw3xb",
+    "created_at": "2026-03-10T08:16:29.564Z",
+    "updated_at": "2026-03-10T08:21:22.282Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 9,
+  "fields": {
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "genre": "Classic Fiction",
+    "release_year": 1925,
+    "description": "Narrated by the observant Nick Carraway, the novel follows the mysterious millionaire Jay Gatsby and his obsessive pursuit of the beautiful Daisy Buchanan in the glittering excess of 1920s New York. Fitzgerald captures the hollow glamour of the Jazz Age and the dark underside of the American Dream with lyrical, unforgettable prose. Gatsby's parties, his green light, and his tragic end have become some of the most iconic images in American literature. It is a timeless story of ambition, illusion, and the impossibility of recapturing the past.",
+    "image": "media/book_images/The_Great_Gatsby_Cover_1925_Retouched_bpdrbr",
+    "created_at": "2026-03-10T08:17:02.414Z",
+    "updated_at": "2026-03-10T08:21:37.335Z"
+  }
+},
+{
+  "model": "api.book",
+  "pk": 10,
+  "fields": {
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "genre": "Classic Fiction",
+    "release_year": 1813,
+    "description": "Elizabeth Bennet, the sharp-witted second daughter of a country gentleman, navigates the pressures of marriage, class, and society in Regency-era England. Her sparring relationship with the proud and wealthy Mr. Darcy evolves from mutual disdain into one of literature's most celebrated romances as both characters confront their own prejudices and pride. Austen's razor-sharp observations on social conventions, family dynamics, and the limited choices available to women remain as relevant and entertaining today as ever. It is widely considered the finest novel in the English language and has never been out of print since its first publication.",
+    "image": "media/book_images/pride-and-prejudice_qac1zq",
+    "created_at": "2026-03-10T08:17:29.035Z",
+    "updated_at": "2026-03-10T08:21:47.201Z"
+  }
+}
+]

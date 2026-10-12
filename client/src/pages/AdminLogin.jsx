@@ -2,6 +2,10 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
 
+// Public demo account (created by `python manage.py seed_demo`)
+const DEMO_USERNAME = "demo";
+const DEMO_PASSWORD = "Library-Demo-2026";
+
 const AdminLogin = () => {
   const { login, error, user, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -19,6 +23,11 @@ const AdminLogin = () => {
     setLoading(true);
     await login(username, password);
     setLoading(false);
+  };
+
+  const fillDemoLogin = () => {
+    setUsername(DEMO_USERNAME);
+    setPassword(DEMO_PASSWORD);
   };
 
   if (authLoading) {
@@ -110,6 +119,29 @@ const AdminLogin = () => {
               {loading ? "Signing in…" : "Enter Library"}
             </button>
           </form>
+
+          {/* Demo account */}
+          <div className="mt-6 rounded-(--radius) border border-dashed border-(--color-border-strong) bg-(--color-surface) px-4 py-3.5">
+            <p className="text-xs font-medium tracking-widest uppercase text-(--color-gold)">
+              Demo account
+            </p>
+            <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+              <dt className="text-(--color-muted-foreground)">Username</dt>
+              <dd className="font-mono text-(--color-foreground) break-all">{DEMO_USERNAME}</dd>
+              <dt className="text-(--color-muted-foreground)">Password</dt>
+              <dd className="font-mono text-(--color-foreground) break-all">{DEMO_PASSWORD}</dd>
+            </dl>
+            <button
+              type="button"
+              onClick={fillDemoLogin}
+              className="mt-3 text-sm font-medium text-(--color-foreground) underline underline-offset-4 decoration-(--color-gold) hover:text-(--color-gold) transition-colors"
+            >
+              Use demo login
+            </button>
+            <p className="mt-2 text-xs leading-relaxed text-(--color-muted-foreground)">
+              The free server sleeps when idle, so the first sign-in can take up to a minute.
+            </p>
+          </div>
         </div>
 
         {/* Right — Image */}
