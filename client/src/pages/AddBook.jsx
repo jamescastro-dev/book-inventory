@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import BookForm from "@/components/books/BookForm.jsx";
 import { authFetch } from "@/utils/authFetch.js";
+import { readApiError } from "@/utils/uploads.js";
 
 const AddBook = () => {
   const navigate = useNavigate();
@@ -21,17 +22,8 @@ const AddBook = () => {
         body: formData,
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        if (typeof data === "object") {
-          const messages = Object.entries(data)
-            .map(([field, errs]) => `${field}: ${errs.join(", ")}`)
-            .join(" | ");
-          setError(messages);
-        } else {
-          setError("Failed to add book. Check console for details.");
-        }
+        setError(await readApiError(res, "Failed to add book. Please try again."));
         return;
       }
 

@@ -4,6 +4,7 @@ import BookItem from "@/components/books/BookItem.jsx";
 import SearchBar from "@/components/books/SearchBar.jsx";
 import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
 import { authFetch } from "@/utils/authFetch.js";
+import { readApiError } from "@/utils/uploads.js";
 
 const BooksPage = () => {
   const [books, setBooks] = useState([]);
@@ -48,7 +49,11 @@ const BooksPage = () => {
         method: "PUT",
         body: updatedBook,
       });
-      if (!res.ok) throw new Error("Failed to update book");
+      if (!res.ok) {
+        setError(await readApiError(res, "Failed to update book."));
+        fetchBooks();
+        return;
+      }
       const data = await res.json();
       setBooks((prev) => prev.map((b) => (b.id === id ? data : b)));
       setSuccess("Book updated successfully!");

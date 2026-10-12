@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ImagePlus } from "lucide-react";
+import { MAX_COVER_BYTES, MAX_COVER_MB } from "@/utils/uploads.js";
 
 export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [title, setTitle] = useState(initialData.title || "");
@@ -9,6 +10,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [description, setDescription] = useState(initialData.description || "");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(initialData.image || "");
+  const [imageError, setImageError] = useState("");
 
   // Release the blob URL of a selected image once it is replaced or the form unmounts
   useEffect(() => {
@@ -68,6 +70,12 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files[0];
+                if (file && file.size > MAX_COVER_BYTES) {
+                  setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)}\u00a0MB. Please choose one under ${MAX_COVER_MB}\u00a0MB.`);
+                  e.target.value = ""; // so choosing the same file again still fires onChange
+                  return;
+                }
+                setImageError("");
                 setImage(file);
                 setPreview(file ? URL.createObjectURL(file) : "");
               }}
@@ -87,8 +95,15 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
               </div>
             )}
 
+            {/* Size error */}
+            {imageError && (
+              <div role="alert" className="absolute bottom-0 inset-x-0 bg-red-700 px-3 py-2">
+                <p className="text-xs text-white text-center">{imageError}</p>
+              </div>
+            )}
+
             {/* Filename badge */}
-            {image && (
+            {image && !imageError && (
               <div className="absolute bottom-0 inset-x-0 bg-(--color-primary)/80 px-3 py-1.5">
                 <p className="text-xs text-(--color-primary-foreground) truncate text-center">
                   {image.name}
