@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { AuthContext } from "@/context/AuthContext.jsx";
 import BookEditModal from "@/components/books/BookEditModal.jsx";
 import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
 import DeleteConfirmation from "@/components/ui/DeleteModal.jsx";
 
 const BookItem = ({ book, onUpdate, onDelete }) => {
+  const { user } = useContext(AuthContext);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
@@ -74,19 +76,21 @@ const BookItem = ({ book, onUpdate, onDelete }) => {
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
         >
-          <div className="mt-6 flex justify-end gap-2">
-            <DeleteConfirmation
-              onConfirm={() => onDelete(book.id)}
-              buttonText="Delete"
-              className="text-sm"
-            />
-            <button
-              onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
-              className="btn-primary px-4 py-2 text-sm"
-            >
-              Edit
-            </button>
-          </div>
+          {user && (
+            <div className="mt-6 flex justify-end gap-2">
+              <DeleteConfirmation
+                onConfirm={() => onDelete(book.id)}
+                buttonText="Delete"
+                className="text-sm"
+              />
+              <button
+                onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
+                className="btn-primary px-4 py-2 text-sm"
+              >
+                Edit
+              </button>
+            </div>
+          )}
         </BookDetailsModal>
       )}
 

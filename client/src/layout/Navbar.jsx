@@ -5,7 +5,7 @@ import { User, ChevronDown, LogOut, Plus, Menu, X, Sun, Moon } from "lucide-reac
 import { useTheme } from "@/hooks/useTheme.js";
 
 export default function Navbar() {
-  const { logout } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -72,50 +72,64 @@ export default function Navbar() {
               }
             </button>
 
-            <Link
-              to="/add-book"
-              className="btn-primary flex items-center gap-1.5 text-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Book
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/add-book"
+                  className="btn-primary flex items-center gap-1.5 text-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Book
+                </Link>
 
-            {/* User dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors"
-              >
-                <div className="w-8 h-8 bg-(--color-muted) rounded-full flex items-center justify-center ring-1 ring-(--color-border)">
-                  <User className="w-4 h-4 text-(--color-muted-foreground)" />
-                </div>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-(--color-muted-foreground) transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-1.5 w-44 bg-(--color-card) border border-(--color-border) rounded-(--radius) shadow-md z-50 py-1 overflow-hidden">
+                {/* User dropdown */}
+                <div className="relative" ref={dropdownRef}>
                   <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-(--color-muted-foreground)" />
-                    Logout
+                    <div className="w-8 h-8 bg-(--color-muted) rounded-full flex items-center justify-center ring-1 ring-(--color-border)">
+                      <User className="w-4 h-4 text-(--color-muted-foreground)" />
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-(--color-muted-foreground) transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-1.5 w-44 bg-(--color-card) border border-(--color-border) rounded-(--radius) shadow-md z-50 py-1 overflow-hidden">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-(--color-muted-foreground)" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <Link to="/login" className="btn-primary text-sm">
+                Sign in
+              </Link>
+            )}
           </div>
 
           {/* Mobile controls */}
           <div className="flex sm:hidden items-center gap-2">
-            <Link
-              to="/add-book"
-              className="btn-primary p-2"
-            >
-              <Plus className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                to="/add-book"
+                className="btn-primary p-2"
+              >
+                <Plus className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link to="/login" className="btn-primary px-3 py-1.5 text-sm">
+                Sign in
+              </Link>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-(--radius) hover:bg-(--color-muted) transition-colors"
@@ -139,14 +153,16 @@ export default function Navbar() {
           >
             My Books
           </button>
-          <Link
-            to="/add-book"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-          >
-            <Plus className="w-4 h-4 text-(--color-gold)" />
-            Add Book
-          </Link>
+          {user && (
+            <Link
+              to="/add-book"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
+            >
+              <Plus className="w-4 h-4 text-(--color-gold)" />
+              Add Book
+            </Link>
+          )}
           <div className="border-t border-(--color-border) mt-1 pt-1">
             <button
               onClick={toggle}
@@ -158,13 +174,24 @@ export default function Navbar() {
               }
               {theme === "dark" ? "Light Mode" : "Dark Mode"}
             </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-            >
-              <LogOut className="w-4 h-4 text-(--color-muted-foreground)" />
-              Logout
-            </button>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
+              >
+                <LogOut className="w-4 h-4 text-(--color-muted-foreground)" />
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
+              >
+                <User className="w-4 h-4 text-(--color-muted-foreground)" />
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       )}

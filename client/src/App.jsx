@@ -4,6 +4,7 @@ import Navbar from "@/layout/Navbar";
 import BooksPage from "@/pages/BooksPage";
 import AddBook from "@/pages/AddBook";
 import AdminLogin from "@/pages/AdminLogin";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 function App() {
   const location = useLocation();
@@ -20,7 +21,14 @@ function App() {
 
         {/* Other pages */}
         <Route path="/books" element={<BooksPage />} />
-        <Route path="/add-book" element={<AddBook />} />
+        <Route
+          path="/add-book"
+          element={
+            <ProtectedRoute>
+              <AddBook />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<AdminLogin />} />
       </Routes>
     </>
