@@ -12,6 +12,10 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
 
+  // Known lint error (react-hooks/set-state-in-effect), left on purpose: this
+  // effect re-syncs the form only when `book` changes, so unsaved edits survive
+  // closing and reopening the modal. The usual fixes (remount via key, or reset
+  // on open) would change that edit behaviour, so they are not applied here.
   useEffect(() => {
     if (book) {
       setTitle(book.title);

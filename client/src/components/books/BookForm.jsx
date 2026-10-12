@@ -8,18 +8,14 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [releaseYear, setReleaseYear] = useState(initialData.release_year || "");
   const [description, setDescription] = useState(initialData.description || "");
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState("");
+  const [preview, setPreview] = useState(initialData.image || "");
 
+  // Release the blob URL of a selected image once it is replaced or the form unmounts
   useEffect(() => {
-    if (initialData.image) setPreview(initialData.image);
-  }, [initialData.image]);
-
-  useEffect(() => {
-    if (!image) return;
-    const objectUrl = URL.createObjectURL(image);
-    setPreview(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [image]);
+    return () => {
+      if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
