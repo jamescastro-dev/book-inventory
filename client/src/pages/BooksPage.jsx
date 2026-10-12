@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import BookItem from "@/components/books/BookItem.jsx";
 import SearchBar from "@/components/books/SearchBar.jsx";
 import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
+import { authFetch } from "@/utils/authFetch.js";
 
 const BooksPage = () => {
   const [books, setBooks] = useState([]);
@@ -19,10 +20,8 @@ const BooksPage = () => {
   const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/books/`, {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-      });
+      // Reading is public, so send no token: an expired one would make the API answer 401.
+      const res = await fetch(`${API_URL}/books/`);
       if (!res.ok) throw new Error("Failed to fetch books");
       const data = await res.json();
       setBooks(data);
@@ -45,11 +44,9 @@ const BooksPage = () => {
 
   const updateBook = async (id, updatedBook) => {
     try {
-      const accessToken = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/books/${id}/`, {
+      const res = await authFetch(`${API_URL}/books/${id}/`, {
         method: "PUT",
         body: updatedBook,
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       });
       if (!res.ok) throw new Error("Failed to update book");
       const data = await res.json();
@@ -65,11 +62,9 @@ const BooksPage = () => {
 
   const deleteBook = async (id) => {
     try {
-      const accessToken = localStorage.getItem("access_token");
       setBooks((prev) => prev.filter((b) => b.id !== id));
-      const res = await fetch(`${API_URL}/books/${id}/`, {
+      const res = await authFetch(`${API_URL}/books/${id}/`, {
         method: "DELETE",
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       });
       if (!res.ok) throw new Error("Failed to delete book");
     } catch (err) {

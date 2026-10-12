@@ -7,7 +7,7 @@ const DEMO_USERNAME = "demo";
 const DEMO_PASSWORD = "Library-Demo-2026";
 
 const AdminLogin = () => {
-  const { login, error, user, loading: authLoading } = useContext(AuthContext);
+  const { login, error, user, loading: authLoading, sessionExpired } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -75,6 +75,12 @@ const AdminLogin = () => {
           <p className="mt-1.5 mb-7 text-sm text-(--color-muted-foreground)">
             Sign in to manage your collection.
           </p>
+
+          {sessionExpired && !error && (
+            <div className="text-sm text-(--color-foreground) bg-(--color-surface) border border-(--color-gold) rounded-(--radius) px-3.5 py-2.5 mb-5">
+              Your session expired. Please sign in again.
+            </div>
+          )}
 
           {error && (
             <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-(--radius) px-3.5 py-2.5 mb-5">

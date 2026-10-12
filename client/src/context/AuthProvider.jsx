@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext.jsx";
+import { SESSION_EXPIRED_EVENT } from "@/utils/authFetch.js";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   // Only "loading" while a stored token is being validated against the API
   const [loading, setLoading] = useState(() => Boolean(localStorage.getItem("access_token")));
   const [error, setError] = useState(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_AUTH_URL;
@@ -30,10 +32,24 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, [API_URL]);
 
+  // A request with our token came back 401: the session expired. Sign out and ask for a new login.
+  useEffect(() => {
+    const onSessionExpired = () => {
+      localStorage.removeItem("access_token");
+      setUser(null);
+      // Kept in context rather than route state: ProtectedRoute also redirects to /login and would drop it.
+      setSessionExpired(true);
+      navigate("/login", { replace: true });
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+  }, [navigate]);
+
   // Login
   const login = async (username, password) => {
     try {
       setError(null);
+      setSessionExpired(false);
       const res = await axios.post(
         `${API_URL}/login/`,
         { username, password },
@@ -67,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, sessionExpired, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

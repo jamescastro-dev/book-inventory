@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import BookForm from "@/components/books/BookForm.jsx";
+import { authFetch } from "@/utils/authFetch.js";
 
 const AddBook = () => {
   const navigate = useNavigate();
@@ -9,17 +10,15 @@ const AddBook = () => {
   const [error, setError] = useState("");
 
   const API_URL = import.meta.env.VITE_API_BOOKS_URL;
-  const accessToken = localStorage.getItem("access_token");
 
   const handleAdd = async (formData) => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`${API_URL}/books/create/`, {
+      const res = await authFetch(`${API_URL}/books/create/`, {
         method: "POST",
         body: formData,
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       });
 
       const data = await res.json();
