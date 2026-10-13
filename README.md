@@ -29,6 +29,7 @@ A full-stack web app for managing a personal book collection. Browse and search 
 - **Light and dark themes**, remembered between visits.
 - **Responsive layout** that works down to phone width.
 - **Cloud image storage**: covers are uploaded to Cloudinary, so the app server stays stateless.
+- **Resized covers**: the grid loads 400 px thumbnails and the details view 800 px versions, made on demand by Cloudinary and sent as WebP or AVIF where the browser supports it. For the 10 sample books the first page of covers is about 0.3 MB instead of 3.7 MB. The original upload is kept and still returned as `image`.
 
 ## Tech stack
 
@@ -70,7 +71,7 @@ Send the token as `Authorization: Bearer <access>`. There is no public sign-up: 
 | `ordering` | `title`, `author`, `release_year` or `created_at`; prefix with `-` to reverse. Titles and authors sort ignoring case, and ties are broken by id so a book never appears on two pages. |
 | `page`, `page_size` | Page number (from 1) and page length (default 8, at most 50). A page past the end returns `404`. |
 
-The response is `{"count", "page", "page_size", "total_pages", "results": [...]}`.
+The response is `{"count", "page", "page_size", "total_pages", "results": [...]}`. Each book carries its cover three times: `image` (the original upload), `image_medium` (800 px wide) and `image_thumb` (400 px wide), all `null` when the book has no cover.
 
 ## Run it locally
 

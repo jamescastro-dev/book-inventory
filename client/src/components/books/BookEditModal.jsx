@@ -25,7 +25,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
       setReleaseYear(book.release_year || "");
       setDescription(book.description || "");
       setImage(null);
-      setPreview(book.image || "");
+      setPreview(book.image_thumb || book.image || "");
     }
   }
 

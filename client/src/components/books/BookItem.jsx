@@ -25,7 +25,7 @@ const BookItem = ({ book, onUpdate, onDelete }) => {
           style={{ aspectRatio: "2/3" }}>
 
           <img
-            src={book.image || "https://placehold.co/400x600/e5d9c3/a08060?text="}
+            src={book.image_thumb || book.image || "https://placehold.co/400x600/e5d9c3/a08060?text="}
             alt={book.title}
             className="w-full h-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-[1.04]"
             loading="lazy"

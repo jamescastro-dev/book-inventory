@@ -34,7 +34,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, children }) => {
         {/* Left: Cover */}
         <div className="shrink-0 w-full md:w-2/5 bg-(--color-card) flex items-center justify-center p-6">
           <img
-            src={book.image ? book.image : "https://placehold.co/400x600/e5d9c3/7c6a56?text=No+Cover"}
+            src={book.image_medium || book.image || "https://placehold.co/400x600/e5d9c3/7c6a56?text=No+Cover"}
             alt={book.title}
             className="object-cover w-full h-72 md:h-full rounded shadow-sm"
           />
