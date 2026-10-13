@@ -26,6 +26,7 @@ A full-stack web app for managing a personal book collection. Browse and search 
 - **Add, edit and delete** books, including cover image upload and a delete confirmation step.
 - **JWT authentication** with a 60-minute access token. Reading books is public; creating, editing and deleting require a valid token and are enforced by the API, not just the UI. Signed-out visitors don't see the Add, Edit or Delete controls, and an expired session sends you back to the sign-in page.
 - **Upload and login limits**: cover images are capped at 5 MB (checked in the browser and again on the server), and sign-in attempts are limited to 5 per minute and 30 per hour per IP address.
+- **Interactive API docs**: an OpenAPI schema generated from the code, with Swagger UI at `/api/docs/` to try the endpoints (including signed-in ones).
 - **Light and dark themes**, remembered between visits.
 - **Responsive layout** that works down to phone width.
 - **Cloud image storage**: covers are uploaded to Cloudinary, so the app server stays stateless.
@@ -47,6 +48,8 @@ Browser ── React SPA (Vercel) ──HTTPS/JSON──> Django REST API (Rende
 ```
 
 ## API
+
+Interactive documentation (Swagger UI) is at <https://book-inventory-backend-kl82.onrender.com/api/docs/>, where you can try every endpoint. On free hosting the first load can take up to a minute while the server wakes up. Locally it is at <http://localhost:8000/api/docs/>, and the raw OpenAPI schema at `/api/schema/`. The tables below are a summary.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|

@@ -22,3 +22,17 @@ class BookPagination(PageNumberPagination):
             "total_pages": paginator.num_pages,
             "results": data,
         })
+
+    def get_paginated_response_schema(self, schema):
+        # Describes the response above in the OpenAPI docs
+        return {
+            "type": "object",
+            "required": ["count", "page", "page_size", "total_pages", "results"],
+            "properties": {
+                "count": {"type": "integer", "description": "Number of books matching the search and filters, over all pages", "example": 10},
+                "page": {"type": "integer", "example": 1},
+                "page_size": {"type": "integer", "example": 8},
+                "total_pages": {"type": "integer", "example": 2},
+                "results": schema,
+            },
+        }

@@ -33,3 +33,8 @@ class BookSerializer(serializers.ModelSerializer):
         if image and image.size > MAX_COVER_BYTES:
             raise serializers.ValidationError(f"The file is too large (max {MAX_COVER_MB} MB).")
         return image
+
+
+class GenreCountSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    count = serializers.IntegerField(help_text="Number of books with this genre")

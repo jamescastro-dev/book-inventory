@@ -39,11 +39,16 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',       
     'django.contrib.staticfiles',
-    'cloudinary',               
+    # Must stay below staticfiles: listed above it, this app replaces `collectstatic` with a
+    # version that copies nothing unless Cloudinary hosts the static files, so WhiteNoise
+    # would have no admin or Swagger UI files to serve.
+    'cloudinary_storage',
+    'cloudinary',
 
     'rest_framework',
+    'drf_spectacular',          # OpenAPI schema and Swagger UI (/api/docs/)
+    'drf_spectacular_sidecar',  # serves Swagger UI's files itself instead of from a CDN
     'corsheaders',
 
     'book_inventory.api',
@@ -162,10 +167,32 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Only the login view is throttled (see accounts/throttles.py); tune the limits here.
     'DEFAULT_THROTTLE_RATES': {
         'login_burst': '5/min',
         'login_sustained': '30/hour',
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Book Inventory API',
+    'DESCRIPTION': (
+        'REST API behind the Book Inventory app. Reading books is public; creating, editing and '
+        'deleting need a JWT access token. To try those here, sign in with `POST /api/auth/login/` '
+        '(demo account: `demo` / `Library-Demo-2026`), then press **Authorize** and paste the `access` token. '
+        'The demo data is shared and publicly editable.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Upload fields are a file in requests but a URL in responses, so describe the two separately
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api',
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
     },
 }
 
