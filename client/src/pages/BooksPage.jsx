@@ -1,40 +1,82 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState, useCallback, useRef } from "react";
 import BookItem from "@/components/books/BookItem.jsx";
 import SearchBar from "@/components/books/SearchBar.jsx";
-import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
+import BookFilters from "@/components/books/BookFilters.jsx";
+import Pagination from "@/components/books/Pagination.jsx";
 import { authFetch } from "@/utils/authFetch.js";
 import { readApiError } from "@/utils/uploads.js";
+import { buildBooksQuery } from "@/utils/booksQuery.js";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
 
 const BooksPage = () => {
-  const [books, setBooks] = useState([]);
-  const [error, setError] = useState("");
+  // One page of results from the API: { count, page, page_size, total_pages, results }. Null until the first load.
+  const [data, setData] = useState(null);
+  const [genres, setGenres] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [selectedBook, setSelectedBook] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const location = useLocation();
+  const [fetching, setFetching] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [genre, setGenre] = useState("");
+  const [sort, setSort] = useState("");
+  const abortRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_BOOKS_URL;
 
+  // Wait for typing to pause before asking the API
+  const search = useDebouncedValue(searchText.trim(), 300);
+
+  // A page number only makes sense for one combination of search/genre/sort, so changing
+  // any of them starts again at page 1.
+  const filterKey = JSON.stringify([search, genre, sort]);
+  const [pageState, setPageState] = useState({ key: filterKey, page: 1 });
+  if (pageState.key !== filterKey) setPageState({ key: filterKey, page: 1 }); // adjust during render, not in an effect
+  const page = pageState.key === filterKey ? pageState.page : 1;
+  const goToPage = useCallback((next) => setPageState({ key: filterKey, page: next }), [filterKey]);
+
   const fetchBooks = useCallback(async () => {
+    // Only the newest request counts, so a slow answer can't overwrite a newer one
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setFetching(true);
     try {
-      setLoading(true);
       // Reading is public, so send no token: an expired one would make the API answer 401.
-      const res = await fetch(`${API_URL}/books/`);
+      const res = await fetch(`${API_URL}/books/?${buildBooksQuery({ search, genre, sort, page })}`, {
+        signal: controller.signal,
+      });
+      if (res.status === 404 && page > 1) {
+        // That page no longer exists, e.g. its last book was just deleted
+        goToPage(page - 1);
+        return;
+      }
       if (!res.ok) throw new Error("Failed to fetch books");
-      const data = await res.json();
-      setBooks(data);
+      setData(await res.json());
+      setLoadError("");
     } catch (err) {
+      if (err.name === "AbortError") return;
       console.error(err);
-      setError("Failed to fetch books. Try again later.");
+      setLoadError("Failed to fetch books. Try again later.");
     } finally {
-      setLoading(false);
+      if (abortRef.current === controller) setFetching(false);
+    }
+  }, [API_URL, search, genre, sort, page, goToPage]);
+
+  const fetchGenres = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/books/genres/`);
+      if (res.ok) setGenres(await res.json());
+    } catch (err) {
+      console.error(err); // the genre filter just stays short
     }
   }, [API_URL]);
 
-  useEffect(() => { fetchBooks(); }, [location.pathname, fetchBooks]);
+  useEffect(() => {
+    fetchBooks();
+    return () => abortRef.current?.abort();
+  }, [fetchBooks]);
+
+  useEffect(() => { fetchGenres(); }, [fetchGenres]);
 
   useEffect(() => {
     if (success) {
@@ -43,6 +85,11 @@ const BooksPage = () => {
     }
   }, [success]);
 
+  const refresh = () => {
+    fetchBooks();
+    fetchGenres();
+  };
+
   const updateBook = async (id, updatedBook) => {
     try {
       const res = await authFetch(`${API_URL}/books/${id}/`, {
@@ -50,42 +97,49 @@ const BooksPage = () => {
         body: updatedBook,
       });
       if (!res.ok) {
-        setError(await readApiError(res, "Failed to update book."));
-        fetchBooks();
+        setActionError(await readApiError(res, "Failed to update book."));
         return;
       }
-      const data = await res.json();
-      setBooks((prev) => prev.map((b) => (b.id === id ? data : b)));
       setSuccess("Book updated successfully!");
-      setError("");
+      setActionError("");
+      refresh(); // the edit may change where the book sorts, or whether it matches the filters
     } catch (err) {
       console.error(err);
-      setError("Failed to update book.");
-      fetchBooks();
+      setActionError("Failed to update book.");
     }
   };
 
   const deleteBook = async (id) => {
     try {
-      setBooks((prev) => prev.filter((b) => b.id !== id));
+      setData((d) => d && { ...d, count: d.count - 1, results: d.results.filter((b) => b.id !== id) });
       const res = await authFetch(`${API_URL}/books/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete book");
+      setActionError("");
     } catch (err) {
       console.error(err);
-      setError("Failed to delete book.");
-      fetchBooks();
+      setActionError("Failed to delete book.");
+    } finally {
+      refresh(); // pull in the next book to fill the page, or restore the one that failed to delete
     }
   };
 
-  const filteredBooks = books.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (book.author && book.author.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const changePage = (next) => {
+    goToPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  const isFiltering = searchTerm.trim().length > 0;
+  const clearFilters = () => {
+    setSearchText("");
+    setGenre("");
+  };
+
+  const books = data?.results ?? [];
+  const error = actionError || loadError;
+  const isFiltering = search.length > 0 || genre !== "";
+  const showSkeleton = data === null && !loadError;
+  const showEmpty = data !== null && books.length === 0;
 
   return (
     <div className="min-h-screen">
@@ -93,28 +147,37 @@ const BooksPage = () => {
       {/* Header */}
       <div className="bg-(--color-surface) border-b border-(--color-border)">
         <div className="max-w-6xl mx-auto px-5 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
             {/* Title + stats — centered on mobile */}
-            <div className="text-center sm:text-left">
+            <div className="text-center md:text-left">
               <h1 className="font-serif text-2xl font-semibold text-(--color-foreground) tracking-tight leading-none">
                 My Library
               </h1>
               <p className="mt-1 text-[0.68rem] uppercase tracking-[0.15em] text-(--color-muted-foreground)">
-                {loading ? "Loading…" : (
+                {data === null ? (loadError ? "Unavailable" : "Loading…") : (
                   <>
-                    {books.length} {books.length === 1 ? "volume" : "volumes"}
-                    {isFiltering && (
-                      <span className="text-(--color-gold) ml-2">· {filteredBooks.length} match{filteredBooks.length !== 1 ? "es" : ""}</span>
-                    )}
+                    {data.count}{" "}
+                    {isFiltering
+                      ? (data.count === 1 ? "match" : "matches")
+                      : (data.count === 1 ? "volume" : "volumes")}
                   </>
                 )}
               </p>
             </div>
 
-            {/* Search */}
-            <div className="w-full sm:w-64">
-              <SearchBar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            {/* Search, genre filter and sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center md:justify-end gap-2">
+              <div className="w-full sm:w-64">
+                <SearchBar value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+              </div>
+              <BookFilters
+                genres={genres}
+                genre={genre}
+                onGenreChange={setGenre}
+                sort={sort}
+                onSortChange={setSort}
+              />
             </div>
 
           </div>
@@ -137,9 +200,9 @@ const BooksPage = () => {
         )}
 
         {/* Skeletons */}
-        {loading && (
+        {showSkeleton && (
           <div className="grid gap-x-4 gap-y-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex flex-col gap-2.5" style={{ animationDelay: `${i * 60}ms` }}>
                 <div className="w-full rounded-(--radius) bg-(--color-muted) skeleton" style={{ aspectRatio: "2/3" }} />
                 <div className="h-3 w-4/5 rounded bg-(--color-muted) skeleton" />
@@ -150,9 +213,12 @@ const BooksPage = () => {
         )}
 
         {/* Grid */}
-        {!loading && filteredBooks.length > 0 && (
-          <div className="grid gap-x-4 gap-y-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {filteredBooks.map((book, i) => (
+        {books.length > 0 && (
+          <div
+            aria-busy={fetching}
+            className={`grid gap-x-4 gap-y-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 transition-opacity duration-150 ${fetching ? "opacity-60" : ""}`}
+          >
+            {books.map((book, i) => (
               <div
                 key={book.id}
                 style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
@@ -164,8 +230,12 @@ const BooksPage = () => {
           </div>
         )}
 
+        {data && (
+          <Pagination page={data.page} totalPages={data.total_pages} onChange={changePage} disabled={fetching} />
+        )}
+
         {/* Empty state */}
-        {!loading && filteredBooks.length === 0 && (
+        {showEmpty && (
           <div className="mt-24 flex flex-col items-center gap-4 text-center">
             <svg viewBox="0 0 80 56" className="w-16 opacity-15" fill="none" aria-hidden="true">
               <rect x="4" y="8" width="32" height="42" rx="2" fill="var(--color-primary)" />
@@ -183,20 +253,17 @@ const BooksPage = () => {
             </p>
             <p className="text-sm text-(--color-muted-foreground) max-w-[26ch] leading-relaxed">
               {isFiltering
-                ? `No books match "${searchTerm}". Try a different title or author.`
+                ? "No books match your search or filters. Try different words."
                 : "Add your first book to begin building your collection."}
             </p>
+            {isFiltering && (
+              <button type="button" onClick={clearFilters} className="btn-primary text-sm">
+                Clear search and filters
+              </button>
+            )}
           </div>
         )}
       </div>
-
-      {selectedBook && (
-        <BookDetailsModal
-          book={selectedBook}
-          isOpen={isModalOpen}
-          onClose={() => { setIsModalOpen(false); setSelectedBook(null); }}
-        />
-      )}
     </div>
   );
 };

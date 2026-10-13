@@ -1,0 +1,20 @@
+// Sort choices for the book list. `value` is sent as ?ordering=; "" means the API's own order (oldest first).
+export const SORT_OPTIONS = [
+  { value: "", label: "Oldest added" },
+  { value: "-created_at", label: "Newest added" },
+  { value: "title", label: "Title A–Z" },
+  { value: "-title", label: "Title Z–A" },
+  { value: "author", label: "Author A–Z" },
+  { value: "-release_year", label: "Year: newest" },
+  { value: "release_year", label: "Year: oldest" },
+];
+
+// Query string for GET /api/books/, leaving out everything that is at its default.
+export function buildBooksQuery({ search = "", genre = "", sort = "", page = 1 } = {}) {
+  const params = new URLSearchParams();
+  if (search.trim()) params.set("search", search.trim());
+  if (genre) params.set("genre", genre);
+  if (sort) params.set("ordering", sort);
+  if (page > 1) params.set("page", String(page));
+  return params.toString();
+}

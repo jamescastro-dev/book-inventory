@@ -21,7 +21,7 @@ A full-stack web app for managing a personal book collection. Browse and search 
 
 ## Features
 
-- **Browse and search** the collection, with live filtering by title or author and a match count.
+- **Search, filter, sort and page** through the collection: search by title or author, filter by genre, and sort by title, author, year or date added. All of it runs on the server, which returns the books 8 per page, so the list stays fast as the collection grows.
 - **Book details** in a modal: cover, author, genre, release year and description.
 - **Add, edit and delete** books, including cover image upload and a delete confirmation step.
 - **JWT authentication** with a 60-minute access token. Reading books is public; creating, editing and deleting require a valid token and are enforced by the API, not just the UI. Signed-out visitors don't see the Add, Edit or Delete controls, and an expired session sends you back to the sign-in page.
@@ -49,7 +49,8 @@ Browser ── React SPA (Vercel) ──HTTPS/JSON──> Django REST API (Rende
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/api/books/` | public | List all books |
+| `GET` | `/api/books/` | public | One page of books, with optional `search`, `genre`, `ordering`, `page` and `page_size` (see below) |
+| `GET` | `/api/books/genres/` | public | Genres in use, each with its number of books |
 | `POST` | `/api/books/create/` | JWT | Create a book (multipart form, optional `image` up to 5 MB) |
 | `PUT` | `/api/books/<id>/` | JWT | Update a book (partial updates allowed) |
 | `DELETE` | `/api/books/<id>/` | JWT | Delete a book |
@@ -59,6 +60,17 @@ Browser ── React SPA (Vercel) ──HTTPS/JSON──> Django REST API (Rende
 | `GET` | `/health/` | public | Liveness check (used by an uptime monitor to keep the free server warm) |
 
 Send the token as `Authorization: Bearer <access>`. There is no public sign-up: accounts are created by the owner (see [Managing users](#managing-users)).
+
+`GET /api/books/` takes these query parameters, all optional:
+
+| Parameter | Meaning |
+|---|---|
+| `search` | Words to find in the title or author, ignoring case. Every word must match. |
+| `genre` | Only books of this genre, ignoring case. |
+| `ordering` | `title`, `author`, `release_year` or `created_at`; prefix with `-` to reverse. Titles and authors sort ignoring case, and ties are broken by id so a book never appears on two pages. |
+| `page`, `page_size` | Page number (from 1) and page length (default 8, at most 50). A page past the end returns `404`. |
+
+The response is `{"count", "page", "page_size", "total_pages", "results": [...]}`.
 
 ## Run it locally
 

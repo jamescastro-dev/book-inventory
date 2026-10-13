@@ -9,6 +9,7 @@ const SearchBar = ({ value, onChange }) => {
         />
         <input
           type="text"
+          aria-label="Search books"
           placeholder="Search by title or author…"
           value={value}
           onChange={onChange}
