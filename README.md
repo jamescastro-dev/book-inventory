@@ -1,5 +1,7 @@
 # Book Inventory
 
+[![CI](https://github.com/jamescastro-dev/book-inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/jamescastro-dev/book-inventory/actions/workflows/ci.yml)
+
 A full-stack web app for managing a personal book collection. Browse and search your library, then add, edit and delete books with cover images behind a JWT login.
 
 **Live demo:** <https://book-inventory-wheat.vercel.app>
@@ -39,8 +41,10 @@ A full-stack web app for managing a personal book collection. Browse and search 
 | Frontend | React 19, Vite, React Router, Tailwind CSS 4, Axios, Lucide icons |
 | Backend | Django 4.2, Django REST Framework, Simple JWT, WhiteNoise, Gunicorn |
 | Database | PostgreSQL (hosted on Neon); SQLite for local development |
+| API docs | OpenAPI 3 schema and Swagger UI via drf-spectacular |
 | Media | Cloudinary |
 | Hosting | Vercel (frontend), Render (backend) |
+| Testing and CI | Django test runner, Node's built-in test runner, ESLint, GitHub Actions |
 
 ```
 Browser ── React SPA (Vercel) ──HTTPS/JSON──> Django REST API (Render) ──> PostgreSQL (Neon)
@@ -123,8 +127,13 @@ npm run dev                        # http://localhost:5173
 
 ```bash
 cd server && python manage.py test        # keep DATABASE_URL blank so tests use a throwaway SQLite database
-cd client && npm run lint && npm run build
+cd client && npm run lint && npm test && npm run build
 ```
+
+[GitHub Actions](.github/workflows/ci.yml) runs the same checks on every push and pull request, plus `manage.py check` and `makemigrations --check`.
+
+- **Server (over 60 tests):** the book list (pagination, search, genre filter, sorting, stable paging), who may create, edit and delete books, validation and the 5 MB cover limit down to the exact byte, the resized cover URLs, login, token refresh, the per-IP login limit (including a forged `X-Forwarded-For`), the OpenAPI schema (it must stay warning-free and list every endpoint), the demo seed command, and that sign-up stays closed. The tests need no Cloudinary account: uploads are swapped for a stand-in storage.
+- **Client:** the helpers that talk to the API: query building, error messages, and the session-expiry wrapper. Two of these tests also read the server's source to fail if the client's 5 MB limit or sort options drift from the API's.
 
 ## Managing users
 
@@ -152,10 +161,12 @@ client/                      React single-page app
   src/pages/                 Login, book list, add-book
   src/components/books/      Book card, details, edit modal, form, search
   src/context/               Auth context and provider (JWT in localStorage)
+  src/utils/                 API helpers (auth wrapper, query building, upload errors) and their tests
 server/                      Django project
-  book_inventory/api/        Book model, REST views, demo_books.json fixture
+  book_inventory/api/        Book model, REST views, filtering, pagination, resized covers, demo_books.json fixture
   book_inventory/accounts/   Login/me endpoints, seed_demo command
   book_inventory/config/     Settings, URLs, WSGI
 docs/screenshots/            Images used in this README
+.github/workflows/ci.yml     Continuous integration
 render.yaml                  Render service definition
 ```
