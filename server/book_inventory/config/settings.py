@@ -172,6 +172,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'login_burst': '5/min',
         'login_sustained': '30/hour',
+        'isbn_lookup': '20/min',
     },
 }
 

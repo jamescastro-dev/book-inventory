@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ImagePlus } from "lucide-react";
 import { MAX_COVER_BYTES, MAX_COVER_MB } from "@/utils/uploads.js";
+import IsbnLookup from "@/components/books/IsbnLookup.jsx";
 
 export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [title, setTitle] = useState(initialData.title || "");
@@ -18,6 +19,20 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
       if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
     };
   }, [preview]);
+
+  // Fill the form from an ISBN lookup. Only fields the lookup has a value for are replaced.
+  const handleFound = (book, coverFile) => {
+    if (book.title) setTitle(book.title);
+    if (book.author) setAuthor(book.author);
+    if (book.genre) setGenre(book.genre);
+    if (book.release_year) setReleaseYear(String(book.release_year));
+    if (book.description) setDescription(book.description);
+    if (coverFile) {
+      setImage(coverFile);
+      setImageError("");
+      setPreview(URL.createObjectURL(coverFile));
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,6 +68,8 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
         onSubmit={handleSubmit}
         className="bg-(--color-surface) border border-(--color-border) rounded-(--radius) shadow-sm w-full p-5 md:p-7"
       >
+        {!initialData.id && <IsbnLookup onFound={handleFound} />}
+
         <div className="flex flex-col lg:flex-row gap-6 items-stretch">
 
           {/* Image upload */}

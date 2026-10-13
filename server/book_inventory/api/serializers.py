@@ -38,3 +38,15 @@ class BookSerializer(serializers.ModelSerializer):
 class GenreCountSerializer(serializers.Serializer):
     name = serializers.CharField()
     count = serializers.IntegerField(help_text="Number of books with this genre")
+
+
+class BookLookupSerializer(serializers.Serializer):
+    """What GET /api/books/lookup/ returns: the Add Book form's fields, filled in from Open Library."""
+
+    isbn = serializers.CharField(help_text="The ISBN-13 of the book")
+    title = serializers.CharField()
+    author = serializers.CharField(allow_blank=True)
+    release_year = serializers.IntegerField(allow_null=True)
+    genre = serializers.CharField(allow_null=True, help_text="A suggestion from a fixed list of common genres; null when no subject matched")
+    description = serializers.CharField(allow_blank=True)
+    cover_url = serializers.URLField(allow_null=True, help_text="Cover image on covers.openlibrary.org, when there is one")

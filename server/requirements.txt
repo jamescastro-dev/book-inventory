@@ -12,3 +12,4 @@ cloudinary>=1.36
 django-cloudinary-storage>=0.3
 drf-spectacular>=0.28,<1
 drf-spectacular-sidecar>=2025.1
+requests>=2.31

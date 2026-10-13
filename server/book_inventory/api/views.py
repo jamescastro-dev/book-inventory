@@ -1,16 +1,18 @@
 from django.db.models import Count, Min
 from django.db.models.functions import Lower
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .filters import BookOrderingFilter
+from .lookup import LookupUnavailable, lookup_isbn, normalize_isbn
 from .models import Book
 from .pagination import BookPagination
-from .serializers import BookSerializer, GenreCountSerializer
+from .serializers import BookLookupSerializer, BookSerializer, GenreCountSerializer
+from .throttles import IsbnLookupThrottle
 
 UNAUTHORIZED = OpenApiResponse(description="Missing, invalid or expired access token.")
 INVALID = OpenApiResponse(description='Validation errors by field, e.g. `{"image": ["The file is too large (max 5 MB)."]}`.')
@@ -65,6 +67,39 @@ def get_genres(request):
         .order_by("key")
     )
     return Response(GenreCountSerializer(rows, many=True).data)
+
+@extend_schema(
+    summary="Look up a book by ISBN",
+    description=(
+        "Fetches the title, author, year, a suggested genre, description and cover link from Open Library, "
+        "to fill in the Add Book form. Needs a token. Each lookup asks Open Library twice, so it is limited to 20 a minute per IP."
+    ),
+    parameters=[OpenApiParameter("isbn", str, required=True, description="ISBN-10 or ISBN-13, with or without hyphens.")],
+    responses={
+        200: BookLookupSerializer,
+        400: OpenApiResponse(description="Not a valid ISBN."),
+        401: UNAUTHORIZED,
+        404: OpenApiResponse(description="Open Library has no book with this ISBN."),
+        429: OpenApiResponse(description="Too many lookups; wait for the number of seconds in the `Retry-After` header."),
+        502: OpenApiResponse(description="Open Library did not answer; try again or enter the details by hand."),
+    },
+)
+@api_view(['GET'])
+@throttle_classes([IsbnLookupThrottle])
+def lookup_book(request):
+    isbn = normalize_isbn(request.query_params.get("isbn", ""))
+    if not isbn:
+        return Response({"detail": "Enter a valid 10 or 13 digit ISBN."}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        book = lookup_isbn(isbn)
+    except LookupUnavailable:
+        return Response(
+            {"detail": "Book lookup is unavailable right now. Try again in a moment, or enter the details by hand."},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+    if book is None:
+        return Response({"detail": "No book found for that ISBN."}, status=status.HTTP_404_NOT_FOUND)
+    return Response(BookLookupSerializer(book).data)
 
 @extend_schema(
     summary="Create a book",

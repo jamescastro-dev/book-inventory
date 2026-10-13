@@ -24,6 +24,7 @@ class ApiDocsTests(TestCase):
             "/api/books/",
             "/api/books/create/",
             "/api/books/genres/",
+            "/api/books/lookup/",
             "/api/books/{id}/",
         })
 

@@ -19,6 +19,7 @@ A full-stack web app for managing a personal book collection. Browse and search 
 |---|---|---|
 | **Sign in** | <img src="docs/screenshots/login-mobile.png" width="220" alt="Sign-in page on a phone, with the demo account box"> | <img src="docs/screenshots/login-desktop.png" width="520" alt="Sign-in page on desktop"> |
 | **Library** | <img src="docs/screenshots/books-mobile.jpg" width="220" alt="Book list on a phone"> | <img src="docs/screenshots/books-desktop.jpg" width="520" alt="Book list on desktop"> |
+| **Add by ISBN** | <img src="docs/screenshots/add-isbn-mobile.jpg" width="220" alt="Add Book on a phone after an ISBN lookup filled in The Hobbit"> | <img src="docs/screenshots/add-isbn-desktop.jpg" width="520" alt="Add Book on desktop after an ISBN lookup"> |
 | **Book detail** | <img src="docs/screenshots/detail-mobile.jpg" width="220" alt="Book details on a phone"> | <img src="docs/screenshots/detail-desktop.jpg" width="520" alt="Book details on desktop, with Edit and Delete"> |
 
 ## Features
@@ -26,6 +27,7 @@ A full-stack web app for managing a personal book collection. Browse and search 
 - **Search, filter, sort and page** through the collection: search by title or author, filter by genre, and sort by title, author, year or date added. All of it runs on the server, which returns the books 8 per page, so the list stays fast as the collection grows.
 - **Book details** in a modal: cover, author, genre, release year and description.
 - **Add, edit and delete** books, including cover image upload and a delete confirmation step.
+- **Add a book by ISBN**: type or paste an ISBN-10 or ISBN-13 and the form fills in the title, author, year, a suggested genre, the description and the cover from [Open Library](https://openlibrary.org) (no API key). The ISBN's check digit is verified first, answers are cached, and lookups are rate limited. The browser fetches the cover and uploads it like any picked file, so it goes through the same 5 MB check and ends up in your own Cloudinary storage.
 - **JWT authentication** with a 60-minute access token. Reading books is public; creating, editing and deleting require a valid token and are enforced by the API, not just the UI. Signed-out visitors don't see the Add, Edit or Delete controls, and an expired session sends you back to the sign-in page.
 - **Upload and login limits**: cover images are capped at 5 MB (checked in the browser and again on the server), and sign-in attempts are limited to 5 per minute and 30 per hour per IP address.
 - **Interactive API docs**: an OpenAPI schema generated from the code, with Swagger UI at `/api/docs/` to try the endpoints (including signed-in ones).
@@ -59,6 +61,7 @@ Interactive documentation (Swagger UI) is at <https://book-inventory-backend-kl8
 |---|---|---|---|
 | `GET` | `/api/books/` | public | One page of books, with optional `search`, `genre`, `ordering`, `page` and `page_size` (see below) |
 | `GET` | `/api/books/genres/` | public | Genres in use, each with its number of books |
+| `GET` | `/api/books/lookup/?isbn=` | JWT | Book details from Open Library for an ISBN (title, author, year, suggested genre, description, cover link). `400` for an invalid ISBN, `404` if unknown, `502` if Open Library is down, `429` past 20 a minute |
 | `POST` | `/api/books/create/` | JWT | Create a book (multipart form, optional `image` up to 5 MB) |
 | `PUT` | `/api/books/<id>/` | JWT | Update a book (partial updates allowed) |
 | `DELETE` | `/api/books/<id>/` | JWT | Delete a book |
