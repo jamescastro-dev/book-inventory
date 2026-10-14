@@ -1,61 +1,65 @@
-import { ChevronDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { SORT_OPTIONS } from "@/utils/booksQuery.js";
 
-const Select = ({ label, value, onChange, children }) => (
-  <label className="relative block flex-1 sm:flex-none sm:w-44">
-    <span className="sr-only">{label}</span>
-    <select
-      value={value}
-      onChange={onChange}
-      className="
-        w-full appearance-none
-        bg-(--color-surface)
-        border border-(--color-border)
-        text-(--color-foreground)
-        rounded-(--radius)
-        pl-3 pr-8 py-2 text-sm
-        shadow-sm
-        transition-colors duration-150
-        hover:border-(--color-border-strong)
-        focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
-      "
-    >
-      {children}
-    </select>
-    <ChevronDown
-      aria-hidden="true"
-      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-muted-foreground) pointer-events-none"
-    />
-  </label>
-);
-
+// Genre chips, the sort order and the "Available now" switch, in a bar that sticks under the navbar
 const BookFilters = ({ genres, genre, onGenreChange, sort, onSortChange, availableOnly, onAvailableOnlyChange }) => {
   // Keep the chosen genre selectable even if the genre list has not loaded (or no longer has it)
   const listed = genres.some((g) => g.name.toLowerCase() === genre.toLowerCase());
+  const chips = [{ name: "", label: "All" }, ...(genre && !listed ? [{ name: genre, label: genre }] : []), ...genres.map((g) => ({ name: g.name, label: g.name, count: g.count }))];
 
   return (
-    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-      <Select label="Filter by genre" value={genre} onChange={(e) => onGenreChange(e.target.value)}>
-        <option value="">All genres</option>
-        {genre && !listed && <option value={genre}>{genre}</option>}
-        {genres.map((g) => (
-          <option key={g.name} value={g.name}>{g.name} ({g.count})</option>
-        ))}
-      </Select>
-      <Select label="Sort books" value={sort} onChange={(e) => onSortChange(e.target.value)}>
-        {SORT_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </Select>
-      <label className="w-full sm:w-auto flex items-center gap-2 text-sm text-(--color-foreground) cursor-pointer select-none whitespace-nowrap px-1">
-        <input
-          type="checkbox"
-          checked={availableOnly}
-          onChange={(e) => onAvailableOnlyChange(e.target.checked)}
-          className="w-4 h-4 accent-(--color-primary)"
-        />
-        Available now
-      </label>
+    <div className="sticky top-16 z-30 bg-(--color-background)/85 backdrop-blur-lg border-b border-(--color-border)">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row md:items-center gap-3">
+        <div role="group" aria-label="Filter by genre" className="flex-1 min-w-0 flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:pl-0 md:pr-10 md:[mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)]">
+          {chips.map((chip) => {
+            const active = chip.name.toLowerCase() === genre.toLowerCase();
+            return (
+              <button
+                key={chip.name || "all"}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onGenreChange(chip.name)}
+                className="chip"
+              >
+                {chip.label}
+                {chip.count != null && <span className={active ? "opacity-70" : "text-(--color-muted-foreground)"}>{chip.count}</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between md:justify-end gap-3 shrink-0">
+          <label className="relative flex items-center">
+            <span className="sr-only">Sort books</span>
+            <ArrowUpDown aria-hidden="true" className="absolute left-3 w-4 h-4 text-(--color-muted-foreground) pointer-events-none" />
+            <select
+              value={sort}
+              onChange={(e) => onSortChange(e.target.value)}
+              className="appearance-none rounded-full border border-(--color-border) bg-(--color-surface) pl-9 pr-4 py-2 text-sm font-medium text-(--color-foreground) hover:border-(--color-border-strong) focus:outline-none focus:border-(--color-accent) transition-colors cursor-pointer"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={availableOnly}
+            onClick={() => onAvailableOnlyChange(!availableOnly)}
+            className="flex items-center gap-2.5 text-sm font-medium text-(--color-foreground) select-none whitespace-nowrap"
+          >
+            <span
+              aria-hidden="true"
+              className={`relative w-10 h-6 rounded-full transition-colors ${availableOnly ? "bg-(--color-accent)" : "bg-(--color-border-strong)"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${availableOnly ? "translate-x-4" : ""}`} />
+            </span>
+            Available now
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

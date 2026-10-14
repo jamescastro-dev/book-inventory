@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildBooksQuery, SORT_OPTIONS } from "./booksQuery.js";
+import { buildBooksQuery, PAGE_SIZE, SORT_OPTIONS } from "./booksQuery.js";
 
 describe("buildBooksQuery", () => {
   it("leaves out everything that is at its default", () => {
@@ -26,6 +26,19 @@ describe("buildBooksQuery", () => {
 
   it("encodes characters that would break the URL", () => {
     assert.equal(buildBooksQuery({ search: "R&D #1", genre: "Sci-Fi/Fantasy" }), "search=R%26D+%231&genre=Sci-Fi%2FFantasy");
+  });
+
+  it("asks for a page size when given one", () => {
+    assert.equal(buildBooksQuery({ page: 2, pageSize: 12 }), "page=2&page_size=12");
+  });
+});
+
+describe("PAGE_SIZE", () => {
+  it("is within the API's limit", () => {
+    // The cap lives in server/book_inventory/api/pagination.py (max_page_size)
+    const pagination = readFileSync(new URL("../../../server/book_inventory/api/pagination.py", import.meta.url), "utf8");
+    const max = Number(pagination.match(/max_page_size\s*=\s*(\d+)/)[1]);
+    assert.ok(PAGE_SIZE >= 1 && PAGE_SIZE <= max, `PAGE_SIZE ${PAGE_SIZE} is over the API's max of ${max}`);
   });
 });
 

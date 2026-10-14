@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { LoaderCircle } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext.jsx";
 
 // Only render `children` for a signed-in user; everyone else is sent to the login page.
@@ -9,8 +10,8 @@ export default function ProtectedRoute({ children, librarianOnly = false }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-(--color-background)">
-        <p className="text-sm text-(--color-muted-foreground)">Checking session…</p>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <LoaderCircle className="w-6 h-6 animate-spin text-(--color-muted-foreground)" aria-label="Checking session" />
       </div>
     );
   }

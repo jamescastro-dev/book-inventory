@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { ImagePlus } from "lucide-react";
-import { MAX_COVER_BYTES, MAX_COVER_MB } from "@/utils/uploads.js";
+import { useState, useEffect } from "react";
 import IsbnLookup from "@/components/books/IsbnLookup.jsx";
+import CoverPicker from "@/components/books/CoverPicker.jsx";
 
-export default function BookForm({ onAdd, initialData = {}, onCancel }) {
-  const [title, setTitle] = useState(initialData.title || "");
-  const [author, setAuthor] = useState(initialData.author || "");
-  const [genre, setGenre] = useState(initialData.genre || "");
-  const [releaseYear, setReleaseYear] = useState(initialData.release_year || "");
-  const [description, setDescription] = useState(initialData.description || "");
-  const [copies, setCopies] = useState(String(initialData.copies ?? 1));
+// The Add Book form. It keeps what was typed until the page moves on, so a failed save loses nothing.
+export default function BookForm({ onAdd, onCancel, saving = false }) {
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [genre, setGenre] = useState("");
+  const [releaseYear, setReleaseYear] = useState("");
+  const [description, setDescription] = useState("");
+  const [copies, setCopies] = useState("1");
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(initialData.image || "");
-  const [imageError, setImageError] = useState("");
+  const [preview, setPreview] = useState("");
 
   // Release the blob URL of a selected image once it is replaced or the form unmounts
   useEffect(() => {
@@ -30,14 +29,13 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
     if (book.description) setDescription(book.description);
     if (coverFile) {
       setImage(coverFile);
-      setImageError("");
       setPreview(URL.createObjectURL(coverFile));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title || !author || !releaseYear) return;
+    if (!title || !author || !releaseYear || saving) return;
 
     const formData = new FormData();
     formData.append("title", title.trim());
@@ -49,159 +47,69 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
     if (image) formData.append("image", image);
 
     onAdd(formData);
-
-    if (!initialData.id) {
-      setTitle(""); setAuthor(""); setGenre("");
-      setReleaseYear(""); setDescription(""); setCopies("1");
-      setImage(null); setPreview("");
-    }
   };
 
-  const fields = [
-    { label: "Title",        value: title,       set: setTitle,       type: "text",   required: true  },
-    { label: "Author",       value: author,      set: setAuthor,      type: "text",   required: true  },
-    { label: "Genre",        value: genre,       set: setGenre,       type: "text",   required: false },
-    { label: "Release Year", value: releaseYear, set: setReleaseYear, type: "number", required: true  },
-    { label: "Copies",       value: copies,      set: setCopies,      type: "number", required: true, min: 1 },
-  ];
-
   return (
-    <div className="flex justify-center">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-(--color-surface) border border-(--color-border) rounded-(--radius) shadow-sm w-full p-5 md:p-7"
-      >
-        {!initialData.id && <IsbnLookup onFound={handleFound} />}
+    <div className="flex flex-col gap-6">
+      <IsbnLookup onFound={handleFound} />
 
-        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+      <form onSubmit={handleSubmit} className="panel">
+        <div className="p-5 sm:p-7">
+          <h2 className="text-base font-semibold text-(--color-foreground)">Book details</h2>
+          <p className="mt-0.5 text-sm text-(--color-muted-foreground)">Fields marked * are required.</p>
 
-          {/* Image upload */}
-          <label className="
-            relative w-full lg:w-72 shrink-0
-            flex flex-col items-center justify-center
-            border border-dashed border-(--color-border)
-            rounded-(--radius) overflow-hidden
-            bg-(--color-card) cursor-pointer
-            h-64 lg:h-auto
-            hover:border-(--color-gold) transition-colors group
-          ">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file && file.size > MAX_COVER_BYTES) {
-                  setImageError(`That image is ${(file.size / 1024 / 1024).toFixed(1)}\u00a0MB. Please choose one under ${MAX_COVER_MB}\u00a0MB.`);
-                  e.target.value = ""; // so choosing the same file again still fires onChange
-                  return;
-                }
-                setImageError("");
+          <div className="mt-6 grid gap-6 md:grid-cols-[13rem_1fr]">
+            <CoverPicker
+              preview={preview}
+              fileName={image?.name}
+              onPick={(file) => {
                 setImage(file);
                 setPreview(file ? URL.createObjectURL(file) : "");
               }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="w-44 md:w-full mx-auto md:mx-0"
             />
 
-            {preview ? (
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-(--color-muted-foreground) group-hover:text-(--color-gold) transition-colors px-4 text-center">
-                <ImagePlus className="w-8 h-8 opacity-50" />
-                <span className="text-sm">Click to upload cover</span>
-              </div>
-            )}
-
-            {/* Size error */}
-            {imageError && (
-              <div role="alert" className="absolute bottom-0 inset-x-0 bg-red-700 px-3 py-2">
-                <p className="text-xs text-white text-center">{imageError}</p>
-              </div>
-            )}
-
-            {/* Filename badge */}
-            {image && !imageError && (
-              <div className="absolute bottom-0 inset-x-0 bg-(--color-primary)/80 px-3 py-1.5">
-                <p className="text-xs text-(--color-primary-foreground) truncate text-center">
-                  {image.name}
-                </p>
-              </div>
-            )}
-          </label>
-
-          {/* Fields */}
-          <div className="flex-1 flex flex-col gap-4">
-            {fields.map(({ label, value, set, type, required, min }) => (
-              <div key={label} className="flex flex-col gap-1">
-                <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
-                  {label}
-                  {required && <span className="text-(--color-gold) ml-0.5">*</span>}
-                </label>
-                <input
-                  type={type}
-                  value={value}
-                  onChange={(e) => set(e.target.value)}
-                  placeholder={label}
-                  required={required}
-                  min={min}
-                  className="
-                    bg-(--color-card) border border-(--color-border)
-                    text-(--color-foreground) text-sm
-                    rounded-(--radius) px-3.5 py-2
-                    placeholder:text-(--color-muted-foreground)
-                    hover:border-(--color-border-strong)
-                    focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
-                    transition-colors
-                  "
-                />
-              </div>
-            ))}
-
-            {/* Description */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
-                Description
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 content-start">
+              <label className="col-span-2 sm:col-span-3">
+                <span className="field-label">Title <span className="text-(--color-accent)">*</span></span>
+                <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. The Hobbit" required />
               </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="A short description…"
-                rows={5}
-                className="
-                  bg-(--color-card) border border-(--color-border)
-                  text-(--color-foreground) text-sm
-                  rounded-(--radius) px-3.5 py-2.5 resize-none
-                  placeholder:text-(--color-muted-foreground)
-                  hover:border-(--color-border-strong)
-                  focus:outline-none focus:border-(--color-gold) focus:ring-2 focus:ring-(--color-gold)/20
-                  transition-colors
-                "
-              />
+              <label className="col-span-2 sm:col-span-3">
+                <span className="field-label">Author <span className="text-(--color-accent)">*</span></span>
+                <input className="input" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="e.g. J.R.R. Tolkien" required />
+              </label>
+              <label className="col-span-2 sm:col-span-1">
+                <span className="field-label">Genre</span>
+                <input className="input" value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="e.g. Fantasy" />
+              </label>
+              <label>
+                <span className="field-label">Year <span className="text-(--color-accent)">*</span></span>
+                <input className="input" type="number" value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="e.g. 1937" required />
+              </label>
+              <label>
+                <span className="field-label">Copies <span className="text-(--color-accent)">*</span></span>
+                <input className="input" type="number" min={1} value={copies} onChange={(e) => setCopies(e.target.value)} required />
+              </label>
+              <label className="col-span-2 sm:col-span-3">
+                <span className="field-label">Description</span>
+                <textarea
+                  className="input resize-y min-h-32"
+                  rows={5}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="A short description…"
+                />
+              </label>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6 pt-5 border-t border-(--color-border)">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-(--color-border) px-5 sm:px-7 py-4">
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="w-full sm:w-auto px-4 py-2 text-sm rounded-(--radius) font-medium
-                bg-(--color-muted) text-(--color-foreground)
-                hover:bg-(--color-border) transition-colors"
-            >
-              Cancel
-            </button>
+            <button type="button" onClick={onCancel} className="btn btn-secondary">Cancel</button>
           )}
-          <button
-            type="submit"
-            className="btn-primary w-full sm:w-auto text-sm"
-          >
-            {initialData?.id ? "Save Changes" : "Add Book"}
+          <button type="submit" disabled={saving} className="btn btn-primary">
+            {saving ? "Adding…" : "Add book"}
           </button>
         </div>
       </form>

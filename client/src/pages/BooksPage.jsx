@@ -1,23 +1,32 @@
 import { useContext, useEffect, useState, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
+import { Plus, SearchX, ServerCog } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext.jsx";
+import { useToast } from "@/context/ToastContext.js";
 import BookItem from "@/components/books/BookItem.jsx";
 import SearchBar from "@/components/books/SearchBar.jsx";
 import BookFilters from "@/components/books/BookFilters.jsx";
+import Cover from "@/components/books/Cover.jsx";
 import Pagination from "@/components/books/Pagination.jsx";
 import { authFetch } from "@/utils/authFetch.js";
 import { readApiError } from "@/utils/uploads.js";
 import { buildBooksQuery } from "@/utils/booksQuery.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
 import { borrowBook, fetchLoans, returnLoan, shortDate } from "@/utils/loans.js";
+import { PAGE_SIZE, SORT_OPTIONS } from "@/utils/booksQuery.js";
+
+// After this long without a first answer, say the free server is probably waking up
+const SLOW_START_MS = 4000;
 
 const BooksPage = () => {
   // One page of results from the API: { count, page, page_size, total_pages, results }. Null until the first load.
   const [data, setData] = useState(null);
   const [genres, setGenres] = useState([]);
   const [loadError, setLoadError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [success, setSuccess] = useState("");
   const [fetching, setFetching] = useState(false);
+  const [slowStart, setSlowStart] = useState(false);
+  // A few covers for the header, taken from the first page that loads (so they don't change as you filter)
+  const [featured, setFeatured] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [genre, setGenre] = useState("");
   const [sort, setSort] = useState("");
@@ -25,6 +34,7 @@ const BooksPage = () => {
   // The signed-in user's books on loan, by book id
   const [myLoans, setMyLoans] = useState({});
   const { user } = useContext(AuthContext);
+  const toast = useToast();
   const abortRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_BOOKS_URL;
@@ -48,7 +58,7 @@ const BooksPage = () => {
     setFetching(true);
     try {
       // Reading is public, so send no token: an expired one would make the API answer 401.
-      const res = await fetch(`${API_URL}/books/?${buildBooksQuery({ search, genre, sort, availableOnly, page })}`, {
+      const res = await fetch(`${API_URL}/books/?${buildBooksQuery({ search, genre, sort, availableOnly, page, pageSize: PAGE_SIZE })}`, {
         signal: controller.signal,
       });
       if (res.status === 404 && page > 1) {
@@ -57,7 +67,9 @@ const BooksPage = () => {
         return;
       }
       if (!res.ok) throw new Error("Failed to fetch books");
-      setData(await res.json());
+      const result = await res.json();
+      setData(result);
+      setFeatured((current) => current ?? result.results.filter((b) => b.image_thumb).slice(0, 3));
       setLoadError("");
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -99,12 +111,13 @@ const BooksPage = () => {
 
   useEffect(() => { fetchMyLoans(); }, [fetchMyLoans]);
 
+  // Until the first page arrives: after a few seconds, explain the wait
+  const waitingForFirstPage = data === null && !loadError;
   useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
+    if (!waitingForFirstPage) return;
+    const timer = setTimeout(() => setSlowStart(true), SLOW_START_MS);
+    return () => clearTimeout(timer);
+  }, [waitingForFirstPage]);
 
   const refresh = () => {
     fetchBooks();
@@ -118,15 +131,14 @@ const BooksPage = () => {
         body: updatedBook,
       });
       if (!res.ok) {
-        setActionError(await readApiError(res, "Failed to update book."));
+        toast.error(await readApiError(res, "Failed to update book."));
         return;
       }
-      setSuccess("Book updated successfully!");
-      setActionError("");
+      toast.success("Book updated.");
       refresh(); // the edit may change where the book sorts, or whether it matches the filters
     } catch (err) {
       console.error(err);
-      setActionError("Failed to update book.");
+      toast.error("Failed to update book.");
     }
   };
 
@@ -138,13 +150,13 @@ const BooksPage = () => {
       });
       if (!res.ok) {
         // e.g. 409: copies are still on loan
-        setActionError(await readApiError(res, "Failed to delete book."));
+        toast.error(await readApiError(res, "Failed to delete book."));
         return;
       }
-      setActionError("");
+      toast.success("Book deleted.");
     } catch (err) {
       console.error(err);
-      setActionError("Failed to delete book.");
+      toast.error("Failed to delete book.");
     } finally {
       refresh(); // pull in the next book to fill the page, or restore the one that failed to delete
     }
@@ -153,10 +165,9 @@ const BooksPage = () => {
   const handleBorrow = async (book) => {
     try {
       const loan = await borrowBook(API_URL, book.id);
-      setSuccess(`Borrowed “${book.title}”. It’s due back on ${shortDate(loan.due_at)}.`);
-      setActionError("");
+      toast.success(`Borrowed “${book.title}”. It’s due back on ${shortDate(loan.due_at)}.`);
     } catch (err) {
-      setActionError(err.message);
+      toast.error(err.message);
     } finally {
       refresh();
       fetchMyLoans();
@@ -166,10 +177,9 @@ const BooksPage = () => {
   const handleReturn = async (book, loan) => {
     try {
       await returnLoan(API_URL, loan.id);
-      setSuccess(`Returned “${book.title}”. Thank you!`);
-      setActionError("");
+      toast.success(`Returned “${book.title}”. Thank you!`);
     } catch (err) {
-      setActionError(err.message);
+      toast.error(err.message);
     } finally {
       refresh();
       fetchMyLoans();
@@ -187,80 +197,116 @@ const BooksPage = () => {
     setAvailableOnly(false);
   };
 
+  const scrollToResults = () => {
+    document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const books = data?.results ?? [];
-  const error = actionError || loadError;
   const isFiltering = search.length > 0 || genre !== "" || availableOnly;
   const showSkeleton = data === null && !loadError;
   const showEmpty = data !== null && books.length === 0;
 
+  const resultsTitle = search
+    ? `Results for “${search}”`
+    : genre || (availableOnly ? "On the shelf now" : "All books");
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label;
+
   return (
-    <div className="min-h-screen">
-
-      {/* Header */}
-      <div className="bg-(--color-surface) border-b border-(--color-border)">
-        <div className="max-w-6xl mx-auto px-5 py-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-
-            {/* Title + stats — centered on mobile */}
-            <div className="text-center lg:text-left">
-              <h1 className="font-serif text-2xl font-semibold text-(--color-foreground) tracking-tight leading-none">
-                My Library
-              </h1>
-              <p className="mt-1 text-[0.68rem] uppercase tracking-[0.15em] text-(--color-muted-foreground)">
-                {data === null ? (loadError ? "Unavailable" : "Loading…") : (
-                  <>
-                    {data.count}{" "}
-                    {isFiltering
-                      ? (data.count === 1 ? "match" : "matches")
-                      : (data.count === 1 ? "volume" : "volumes")}
-                  </>
-                )}
-              </p>
-            </div>
-
-            {/* Search, genre filter and sort */}
-            <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap sm:items-center sm:justify-center lg:justify-end gap-2">
-              <div className="w-full sm:w-64">
-                <SearchBar value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-(--color-border)">
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(60rem_30rem_at_85%_-10%,var(--color-accent-soft),transparent_70%)]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-14 grid lg:grid-cols-[1fr_24rem] gap-10 items-center">
+          <div>
+            <p className="eyebrow">{user ? `Welcome back, ${user.username}` : "Open to everyone"}</p>
+            <h1 className="mt-3 font-serif text-[2.4rem] sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.05] text-(--color-foreground) max-w-2xl">
+              Find your next great read.
+            </h1>
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg text-(--color-muted-foreground) max-w-xl">
+              {user?.is_librarian
+                ? "Search the catalogue, keep copies up to date and see what’s out on loan."
+                : "Search the catalogue, see what’s on the shelf and borrow a book for 14 days."}
+            </p>
+            <div className="mt-6 sm:mt-7 flex flex-col sm:flex-row gap-3 max-w-2xl">
+              <div className="flex-1">
+                <SearchBar value={searchText} onChange={setSearchText} />
               </div>
-              <BookFilters
-                genres={genres}
-                genre={genre}
-                onGenreChange={setGenre}
-                sort={sort}
-                onSortChange={setSort}
-                availableOnly={availableOnly}
-                onAvailableOnlyChange={setAvailableOnly}
-              />
+              {user?.is_librarian && (
+                <Link to="/add-book" className="btn btn-primary h-13 px-6">
+                  <Plus className="w-4 h-4" aria-hidden="true" />
+                  Add a book
+                </Link>
+              )}
             </div>
+          </div>
 
+          {/* A fanned stack of covers from the collection */}
+          <div aria-hidden="true" className="hidden lg:flex justify-center items-end h-72 pr-4">
+            {(featured ?? []).map((book, i) => (
+              <div
+                key={book.id}
+                className="w-36 aspect-2/3 rounded-(--radius-control) overflow-hidden cover-shadow bg-(--color-muted) -mx-5"
+                style={{ transform: `rotate(${(i - 1) * 8}deg) translateY(${i === 1 ? -18 : 0}px)`, zIndex: i === 1 ? 2 : 1 }}
+              >
+                <Cover book={book} eager />
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-5 py-8">
+      <BookFilters
+        genres={genres}
+        genre={genre}
+        onGenreChange={(next) => { setGenre(next); scrollToResults(); }}
+        sort={sort}
+        onSortChange={setSort}
+        availableOnly={availableOnly}
+        onAvailableOnlyChange={setAvailableOnly}
+      />
 
-        {/* Feedback */}
-        {error && (
-          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-(--radius) px-4 py-2.5 mb-6 text-center">
-            {error}
+      {/* Results */}
+      <section id="results" className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 scroll-mt-32">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div className="min-w-0">
+            <h2 className="font-serif text-2xl font-semibold tracking-tight text-(--color-foreground) truncate">{resultsTitle}</h2>
+            <p className="mt-1 text-sm text-(--color-muted-foreground)" aria-live="polite">
+              {data === null
+                ? (loadError ? "Unavailable" : "Loading…")
+                : `${data.count} ${data.count === 1 ? "title" : "titles"}${sort ? ` · ${sortLabel}` : ""}`}
+            </p>
+          </div>
+          {isFiltering && (
+            <button type="button" onClick={clearFilters} className="btn btn-ghost shrink-0">Clear filters</button>
+          )}
+        </div>
+
+        {loadError && (
+          <div role="alert" className="rounded-(--radius-control) border border-(--color-danger)/30 bg-(--color-danger-soft) px-4 py-3 mb-6 text-sm text-(--color-danger) flex items-center justify-between gap-3">
+            {loadError}
+            <button type="button" onClick={refresh} className="btn btn-secondary shrink-0">Try again</button>
           </div>
         )}
-        {success && (
-          <div className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-(--radius) px-4 py-2.5 mb-6 text-center">
-            {success}
+
+        {/* The free server sleeps when idle; say so instead of leaving a blank wait */}
+        {showSkeleton && slowStart && (
+          <div role="status" className="panel mb-6 px-4 py-3.5 flex items-start gap-3">
+            <ServerCog className="w-5 h-5 shrink-0 text-(--color-accent) animate-pulse" aria-hidden="true" />
+            <p className="text-sm text-(--color-foreground)">
+              <span className="font-semibold">Waking up the server…</span>{" "}
+              <span className="text-(--color-muted-foreground)">It sleeps when nobody’s using it, so the first visit can take up to a minute.</span>
+            </p>
           </div>
         )}
 
         {/* Skeletons */}
         {showSkeleton && (
-          <div className="grid gap-x-4 gap-y-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-2.5" style={{ animationDelay: `${i * 60}ms` }}>
-                <div className="w-full rounded-(--radius) bg-(--color-muted) skeleton" style={{ aspectRatio: "2/3" }} />
-                <div className="h-3 w-4/5 rounded bg-(--color-muted) skeleton" />
-                <div className="h-2.5 w-3/5 rounded bg-(--color-muted) skeleton" />
+          <div className="grid gap-x-5 gap-y-9 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2.5">
+                <div className="w-full aspect-2/3 rounded-(--radius-control) skeleton" />
+                <div className="h-3.5 w-4/5 rounded-full skeleton" />
+                <div className="h-3 w-3/5 rounded-full skeleton" />
               </div>
             ))}
           </div>
@@ -270,12 +316,12 @@ const BooksPage = () => {
         {books.length > 0 && (
           <div
             aria-busy={fetching}
-            className={`grid gap-x-4 gap-y-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 transition-opacity duration-150 ${fetching ? "opacity-60" : ""}`}
+            className={`grid gap-x-5 gap-y-9 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 transition-opacity duration-150 ${fetching ? "opacity-60" : ""}`}
           >
             {books.map((book, i) => (
               <div
                 key={book.id}
-                style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
+                style={{ animationDelay: `${Math.min(i * 35, 350)}ms` }}
                 className="animate-fade-in"
               >
                 <BookItem
@@ -297,34 +343,26 @@ const BooksPage = () => {
 
         {/* Empty state */}
         {showEmpty && (
-          <div className="mt-24 flex flex-col items-center gap-4 text-center">
-            <svg viewBox="0 0 80 56" className="w-16 opacity-15" fill="none" aria-hidden="true">
-              <rect x="4" y="8" width="32" height="42" rx="2" fill="var(--color-primary)" />
-              <rect x="44" y="8" width="32" height="42" rx="2" fill="var(--color-primary)" />
-              <rect x="36" y="6" width="8" height="46" rx="1" fill="var(--color-secondary)" />
-              <line x1="10" y1="18" x2="30" y2="18" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-              <line x1="10" y1="23" x2="30" y2="23" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-              <line x1="10" y1="28" x2="25" y2="28" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-              <line x1="50" y1="18" x2="70" y2="18" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-              <line x1="50" y1="23" x2="70" y2="23" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-              <line x1="50" y1="28" x2="65" y2="28" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-            </svg>
-            <p className="font-serif text-2xl text-(--color-muted-foreground) font-medium">
+          <div className="py-20 flex flex-col items-center gap-3 text-center">
+            <span className="w-14 h-14 rounded-full bg-(--color-muted) text-(--color-muted-foreground) flex items-center justify-center">
+              <SearchX className="w-6 h-6" aria-hidden="true" />
+            </span>
+            <p className="mt-2 font-serif text-2xl font-semibold text-(--color-foreground)">
               {isFiltering ? "Nothing found" : "The shelves are bare"}
             </p>
-            <p className="text-sm text-(--color-muted-foreground) max-w-[26ch] leading-relaxed">
+            <p className="text-sm text-(--color-muted-foreground) max-w-xs leading-relaxed">
               {isFiltering
-                ? "No books match your search or filters. Try different words."
-                : "Add your first book to begin building your collection."}
+                ? "No books match your search or filters. Try different words, or clear the filters."
+                : "No books have been added yet."}
             </p>
             {isFiltering && (
-              <button type="button" onClick={clearFilters} className="btn-primary text-sm">
+              <button type="button" onClick={clearFilters} className="btn btn-primary mt-3">
                 Clear search and filters
               </button>
             )}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

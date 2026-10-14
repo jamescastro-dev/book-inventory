@@ -18,15 +18,15 @@ A full-stack library app. Readers browse the catalogue, borrow and return books 
 | | Mobile (390 px) | Desktop |
 |---|---|---|
 | **Sign in** | <img src="docs/screenshots/login-mobile.png" width="220" alt="Sign-in page on a phone, with the two demo accounts"> | <img src="docs/screenshots/login-desktop.png" width="520" alt="Sign-in page on desktop"> |
-| **Library** | <img src="docs/screenshots/books-mobile.jpg" width="220" alt="Book list on a phone"> | <img src="docs/screenshots/books-desktop.jpg" width="520" alt="Book list on desktop"> |
-| **Add by ISBN** | <img src="docs/screenshots/add-isbn-mobile.jpg" width="220" alt="Add Book on a phone after an ISBN lookup filled in The Hobbit"> | <img src="docs/screenshots/add-isbn-desktop.jpg" width="520" alt="Add Book on desktop after an ISBN lookup"> |
-| **Book detail** | <img src="docs/screenshots/detail-mobile.jpg" width="220" alt="Book details on a phone, with copies on the shelf and a Borrow button"> | <img src="docs/screenshots/detail-desktop.jpg" width="520" alt="Book details on desktop, with a Borrow button"> |
-| **Loans** | <img src="docs/screenshots/loans-mobile.jpg" width="220" alt="A librarian's list of all loans on a phone, one of them overdue"> | <img src="docs/screenshots/loans-desktop.jpg" width="520" alt="A librarian's list of all loans on desktop"> |
+| **Catalogue** | <img src="docs/screenshots/books-mobile.jpg" width="220" alt="The catalogue on a phone: search, genre chips and covers with availability badges"> | <img src="docs/screenshots/books-desktop.jpg" width="520" alt="The catalogue on desktop"> |
+| **Add by ISBN** | <img src="docs/screenshots/add-isbn-mobile.jpg" width="220" alt="Add Book on a phone after an ISBN lookup filled in the details and cover"> | <img src="docs/screenshots/add-isbn-desktop.jpg" width="520" alt="Add Book on desktop after an ISBN lookup"> |
+| **Book detail** | <img src="docs/screenshots/detail-mobile.jpg" width="220" alt="Book details in a bottom sheet on a phone, with a Borrow button"> | <img src="docs/screenshots/detail-desktop.jpg" width="520" alt="Book details on desktop, with a Borrow button"> |
+| **Loans** | <img src="docs/screenshots/loans-mobile.jpg" width="220" alt="A reader's loans on a phone, with due dates and progress bars"> | <img src="docs/screenshots/loans-desktop.jpg" width="520" alt="A librarian's view of all loans on desktop, in the dark theme"> |
 
 ## Features
 
-- **Search, filter, sort and page** through the collection: search by title or author, filter by genre, and sort by title, author, year or date added. All of it runs on the server, which returns the books 8 per page, so the list stays fast as the collection grows.
-- **Book details** in a modal: cover, author, genre, release year, copies on the shelf and description.
+- **Search, filter, sort and page** through the collection: search by title or author, filter by genre, and sort by title, author, year or date added. All of it runs on the server, which returns the books 12 per page, so the list stays fast as the collection grows.
+- **Book details** in a sheet that slides up on phones: cover, author, genre, release year, copies on the shelf and description.
 - **Borrowing**: a book has a number of copies, and the list shows how many are on the shelf (with an *Available now* filter). Readers borrow a copy for 14 days and return it; a Loans page lists what they have out (with "due in 3 days" or "2 days overdue") and their history. Librarians also see everyone's loans and the overdue ones, and can check books in. The rules are enforced by the API: a reader can't hold two copies of one book (a database constraint backs this up), the last copy can't go to two people at once (the book row is locked while lending), a book can't drop below the copies on loan, and a book with copies out can't be deleted.
 - **Roles**: librarians (the `Librarians` group, plus superusers) manage the catalogue; everyone else who signs in is a reader. The UI shows each role only what it can do, and the API checks it again.
 - **Add, edit and delete** books (librarians), including cover image upload and a delete confirmation step.
@@ -34,10 +34,12 @@ A full-stack library app. Readers browse the catalogue, borrow and return books 
 - **JWT authentication** with a 60-minute access token. Reading books is public; borrowing needs a signed-in account and managing books a librarian, both enforced by the API, not just the UI. An expired session sends you back to the sign-in page.
 - **Upload and login limits**: cover images are capped at 5 MB (checked in the browser and again on the server), and sign-in attempts are limited to 5 per minute and 30 per hour per IP address.
 - **Interactive API docs**: an OpenAPI schema generated from the code, with Swagger UI at `/api/docs/` to try the endpoints (including signed-in ones).
-- **Light and dark themes**, remembered between visits.
-- **Responsive layout** that works down to phone width.
+- **Light and dark themes**: follows the system setting until you pick one, then remembers it.
+- **Responsive layout** that works down to phone width, with a tab bar at the bottom of the screen on phones.
+- **Feedback where you are looking**: short notifications for borrowing, returning and saving; skeletons while pages load; and a "waking up the server" note when the free backend is slow to answer the first request.
+- **34 sample books** across seven genres, so search, filters and paging have something to work with. Books without a cover get a typeset one instead of a blank box.
 - **Cloud image storage**: covers are uploaded to Cloudinary, so the app server stays stateless.
-- **Resized covers**: the grid loads 400 px thumbnails and the details view 800 px versions, made on demand by Cloudinary and sent as WebP or AVIF where the browser supports it. For the 10 sample books the first page of covers is about 0.3 MB instead of 3.7 MB. The original upload is kept and still returned as `image`.
+- **Resized covers**: the grid loads 400 px thumbnails and the details view 800 px versions, made on demand by Cloudinary and sent as WebP or AVIF where the browser supports it. For the original 10 sample books the covers came to about 0.3 MB instead of 3.7 MB. The original upload is kept and still returned as `image`.
 
 ## Tech stack
 
@@ -86,7 +88,7 @@ Send the token as `Authorization: Bearer <access>`. There is no public sign-up: 
 | `genre` | Only books of this genre, ignoring case. |
 | `available` | `true` for only books with at least one copy on the shelf. |
 | `ordering` | `title`, `author`, `release_year` or `created_at`; prefix with `-` to reverse. Titles and authors sort ignoring case, and ties are broken by id so a book never appears on two pages. |
-| `page`, `page_size` | Page number (from 1) and page length (default 8, at most 50). A page past the end returns `404`. |
+| `page`, `page_size` | Page number (from 1) and page length (default 8, at most 50; the app asks for 12). A page past the end returns `404`. |
 
 The response is `{"count", "page", "page_size", "total_pages", "results": [...]}`. Each book also has `copies` and `available_copies`, and carries its cover three times: `image` (the original upload), `image_medium` (800 px wide) and `image_thumb` (400 px wide), all `null` when the book has no cover.
 
@@ -118,7 +120,7 @@ Then set up the database and start the server:
 
 ```bash
 python manage.py migrate
-python manage.py seed_demo         # creates the demo user and the 10 sample books
+python manage.py seed_demo         # creates the demo accounts and the 34 sample books
 python manage.py runserver         # http://localhost:8000
 ```
 
@@ -155,9 +157,12 @@ python manage.py changepassword <username> # reset a forgotten password
 python manage.py seed_demo                 # create or repair the two demo accounts, restore any missing sample books
 python manage.py seed_demo --reset-books   # also revert edited sample books (including their copy counts)
 python manage.py seed_demo --reset-loans   # also check in every book the demo accounts have out
+python manage.py seed_demo --skip-covers   # don't fetch missing sample covers from Open Library
 ```
 
 `seed_demo` is safe to run repeatedly and never deletes anything. It matches sample books by title and author, so a sample book that was *renamed* looks like a missing one and is restored alongside it. Delete the extra copy by hand. Both demo accounts are normal, non-admin accounts: `demo` is in the `Librarians` group and `reader` is not.
+
+The sample books live in `server/book_inventory/api/fixtures/demo_books.json`, which only `seed_demo` reads (it has an `isbn` key that isn't a model field, so `loaddata` would refuse it). The original ten have covers already in Cloudinary. The others list an ISBN instead: the first time `seed_demo` finds one of them without a cover, it downloads the cover from Open Library and uploads it to the media storage (Cloudinary in production). After that the cover is kept, even by `--reset-books`, so running the command again uploads nothing. If Open Library can't be reached, the books are still added and the next run retries the covers.
 
 To make someone a librarian, add them to the `Librarians` group in `/admin/` (Users → the user → Groups), or run `python manage.py shell -c "from django.contrib.auth.models import Group, User; User.objects.get(username='NAME').groups.add(Group.objects.get(name='Librarians'))"`. Superusers are always librarians. Loans are also listed in `/admin/`.
 
@@ -171,12 +176,13 @@ To make someone a librarian, add them to the `Librarians` group in `/admin/` (Us
 
 ```
 client/                      React single-page app
-  src/pages/                 Login, book list, add-book
-  src/components/books/      Book card, details, edit modal, form, search
-  src/context/               Auth context and provider (JWT in localStorage)
-  src/utils/                 API helpers (auth wrapper, query building, upload errors) and their tests
+  src/pages/                 Sign-in, catalogue, add book, loans
+  src/components/books/      Book card and cover, details and edit sheets, form, filters, ISBN lookup and scanner
+  src/components/ui/         Sheet (dialog), delete confirmation, logo
+  src/context/               Auth (JWT in localStorage) and toast notifications
+  src/utils/                 API helpers (auth wrapper, query building, loans, availability, upload errors) and their tests
 server/                      Django project
-  book_inventory/api/        Book model, REST views, filtering, pagination, resized covers, demo_books.json fixture
+  book_inventory/api/        Book and Loan models, REST views, filtering, pagination, resized covers, ISBN lookup, sample books
   book_inventory/accounts/   Login/me endpoints, seed_demo command
   book_inventory/config/     Settings, URLs, WSGI
 docs/screenshots/            Images used in this README

@@ -23,10 +23,11 @@ export function returnLoan(apiUrl, loanId) {
 }
 
 // One page of loans: { count, page, total_pages, results }. scope "mine" or "all" (librarians);
-// status "active", "overdue", "returned" or "all".
-export function fetchLoans(apiUrl, { scope = "mine", status = "active", page = 1 } = {}) {
+// status "active", "overdue", "returned" or "all". A small pageSize is handy when only `count` matters.
+export function fetchLoans(apiUrl, { scope = "mine", status = "active", page = 1, pageSize } = {}) {
   const params = new URLSearchParams({ scope, status });
   if (page > 1) params.set("page", String(page));
+  if (pageSize) params.set("page_size", String(pageSize));
   return send(`${apiUrl}/loans/?${params}`, {}, "Couldn't load the loans. Please try again.");
 }
 
@@ -45,6 +46,21 @@ export function dueLabel(dueAt, now = new Date()) {
   if (days === 0) return "Due today";
   if (days === 1) return "Due tomorrow";
   return `Due in ${days} days`;
+}
+
+// How urgent a loan is: "overdue", "soon" (due within 2 calendar days) or "ok"
+export function dueTone(dueAt, now = new Date()) {
+  const due = new Date(dueAt);
+  if (due < now) return "overdue";
+  return calendarDaysBetween(now, due) <= 2 ? "soon" : "ok";
+}
+
+// How far through its loan period a loan is, from 0 (just borrowed) to 1 (due now or later)
+export function loanProgress(borrowedAt, dueAt, now = new Date()) {
+  const start = new Date(borrowedAt).getTime();
+  const end = new Date(dueAt).getTime();
+  if (end <= start) return 1;
+  return Math.min(1, Math.max(0, (now.getTime() - start) / (end - start)));
 }
 
 function sameDay(a, b) {

@@ -1,25 +1,20 @@
 import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext.jsx";
 import BookEditModal from "@/components/books/BookEditModal.jsx";
 import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
+import Cover from "@/components/books/Cover.jsx";
 import DeleteConfirmation from "@/components/ui/DeleteModal.jsx";
-import { dueLabel } from "@/utils/loans.js";
+import { availability } from "@/utils/availability.js";
 
-// "2 of 3 available", "On loan to you" or "All copies on loan", with a coloured dot
-export function Availability({ book, myLoan, className = "" }) {
-  const [dot, text] = myLoan
-    ? ["bg-(--color-gold)", "On loan to you"]
-    : book.available_copies > 0
-      ? ["bg-green-600", `${book.available_copies} of ${book.copies} available`]
-      : ["bg-red-600", "All copies on loan"];
-  return (
-    <p className={`flex items-center gap-1.5 text-[0.7rem] text-(--color-muted-foreground) ${className}`}>
-      <span aria-hidden="true" className={`inline-block w-1.5 h-1.5 rounded-full ${dot}`} />
-      {text}
-    </p>
-  );
-}
+// Spelled out in full so Tailwind finds the class names
+const TONE_TEXT = {
+  success: "text-(--color-success)",
+  accent: "text-(--color-accent)",
+  danger: "text-(--color-danger)",
+  muted: "text-(--color-muted-foreground)",
+};
 
 const BookItem = ({ book, myLoan, onUpdate, onDelete, onBorrow, onReturn }) => {
   const { user } = useContext(AuthContext);
@@ -27,6 +22,7 @@ const BookItem = ({ book, myLoan, onUpdate, onDelete, onBorrow, onReturn }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const status = availability(book, myLoan);
 
   const handleSave = (updatedBook) => {
     onUpdate(book.id, updatedBook);
@@ -42,121 +38,86 @@ const BookItem = ({ book, myLoan, onUpdate, onDelete, onBorrow, onReturn }) => {
     }
   };
 
+  const actions = (
+    <div className="flex flex-wrap items-center gap-2">
+      <p className={`mr-auto text-sm ${status.tone === "danger" ? "text-(--color-danger) font-semibold" : "text-(--color-muted-foreground)"}`}>
+        {status.detail}
+      </p>
+
+      {isLibrarian && (
+        <>
+          <DeleteConfirmation onConfirm={() => onDelete(book.id)} itemName={book.title} />
+          <button
+            type="button"
+            onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
+            className="btn btn-secondary"
+          >
+            <Pencil className="w-4 h-4" aria-hidden="true" />
+            Edit
+          </button>
+        </>
+      )}
+
+      {!user && (
+        <Link to="/login" className="btn btn-primary">Sign in to borrow</Link>
+      )}
+
+      {user && myLoan && (
+        <button type="button" disabled={busy} onClick={() => run(() => onReturn(book, myLoan))} className="btn btn-primary">
+          {busy ? "Returning…" : "Return"}
+        </button>
+      )}
+
+      {user && !myLoan && (
+        <button
+          type="button"
+          disabled={busy || book.available_copies < 1}
+          onClick={() => run(() => onBorrow(book))}
+          className="btn btn-primary"
+        >
+          {book.available_copies < 1 ? "All copies on loan" : busy ? "Borrowing…" : "Borrow"}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div
-        onClick={() => setIsDetailsModalOpen(true)}
-        className="group cursor-pointer"
-      >
-        {/* Cover */}
-        <div className="relative overflow-hidden rounded-(--radius) shadow-sm"
-          style={{ aspectRatio: "2/3" }}>
-
-          <img
-            src={book.image_thumb || book.image || "https://placehold.co/400x600/e5d9c3/a08060?text="}
-            alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-[1.04]"
-            loading="lazy"
-          />
-
-          {/* Gradient overlay — always present, intensifies on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          {/* Hover info */}
-          <div className="absolute inset-x-0 bottom-0 p-3 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-            {book.author && (
-              <p className="text-white/90 text-xs font-medium truncate">{book.author}</p>
-            )}
-            {book.release_year && (
-              <p className="text-white/55 text-[0.68rem] mt-0.5">{book.release_year}</p>
-            )}
-          </div>
-
-          {/* Genre pill */}
-          {book.genre && (
-            <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="bg-black/50 backdrop-blur-sm text-white/85 text-[0.6rem] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full">
-                {book.genre}
-              </span>
-            </div>
-          )}
-
-          {/* Left spine accent */}
-          <div className="absolute left-0 inset-y-0 w-[3px] bg-gradient-to-b from-(--color-gold)/60 via-(--color-gold) to-(--color-gold)/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-l-(--radius)" />
-        </div>
-
-        {/* Title below */}
-        <div className="mt-2.5 px-0.5">
-          <p className="font-serif text-sm font-semibold text-(--color-foreground) leading-snug line-clamp-2 group-hover:text-(--color-primary) transition-colors duration-200">
-            {book.title}
-          </p>
-          {book.author && (
-            <p className="text-[0.72rem] text-(--color-muted-foreground) mt-0.5 truncate">
-              {book.author}
-            </p>
-          )}
-          <Availability book={book} myLoan={myLoan} className="mt-1" />
-        </div>
-      </div>
-
-      {isDetailsModalOpen && (
-        <BookDetailsModal
-          book={book}
-          isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
+      <article className="group flex flex-col" data-book={book.title}>
+        <button
+          type="button"
+          onClick={() => setIsDetailsModalOpen(true)}
+          aria-label={`${book.title}${book.author ? ` by ${book.author}` : ""}: details`}
+          className="relative block w-full aspect-2/3 rounded-(--radius-control) overflow-hidden cover-shadow bg-(--color-muted) transition duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-(--shadow-lg)"
         >
-          <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
-            {!user && (
-              <Link to="/login" className="text-sm font-medium underline underline-offset-4 decoration-(--color-gold) text-(--color-foreground) hover:text-(--color-gold)">
-                Sign in to borrow
-              </Link>
-            )}
+          <Cover book={book} />
+          <span className={`badge badge-on-cover absolute top-2 left-2 ${TONE_TEXT[status.tone]}`}>
+            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-current" />
+            {status.label}
+          </span>
+        </button>
 
-            {user && myLoan && (
-              <>
-                <span className={`mr-auto text-sm ${myLoan.is_overdue ? "text-red-700 font-medium" : "text-(--color-muted-foreground)"}`}>
-                  {dueLabel(myLoan.due_at)}
-                </span>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => run(() => onReturn(book, myLoan))}
-                  className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
-                >
-                  {busy ? "Returning…" : "Return"}
-                </button>
-              </>
-            )}
+        <div className="mt-3 px-0.5 min-w-0">
+          <h3 className="text-[0.925rem] font-semibold leading-snug text-(--color-foreground) line-clamp-2">
+            {book.title}
+          </h3>
+          {book.author && (
+            <p className="mt-0.5 text-sm text-(--color-muted-foreground) truncate">{book.author}</p>
+          )}
+          <p className="mt-1 text-xs text-(--color-muted-foreground)">
+            {[book.genre, book.release_year].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+      </article>
 
-            {user && !myLoan && (
-              <button
-                type="button"
-                disabled={busy || book.available_copies < 1}
-                onClick={() => run(() => onBorrow(book))}
-                className="btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {book.available_copies < 1 ? "All copies on loan" : busy ? "Borrowing…" : "Borrow"}
-              </button>
-            )}
-
-            {isLibrarian && (
-              <>
-                <DeleteConfirmation
-                  onConfirm={() => onDelete(book.id)}
-                  buttonText="Delete"
-                  className="text-sm"
-                />
-                <button
-                  onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
-                  className="px-4 py-2 text-sm rounded-(--radius) font-medium border border-(--color-border) text-(--color-foreground) hover:border-(--color-border-strong) transition-colors"
-                >
-                  Edit
-                </button>
-              </>
-            )}
-          </div>
-        </BookDetailsModal>
-      )}
+      <BookDetailsModal
+        book={book}
+        myLoan={myLoan}
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+      >
+        {actions}
+      </BookDetailsModal>
 
       <BookEditModal
         book={book}

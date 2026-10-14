@@ -1,227 +1,167 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useContext, useRef, useEffect } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext.jsx";
-import { User, ChevronDown, LogOut, Plus, Menu, X, Sun, Moon, BookMarked } from "lucide-react";
+import { BookMarked, ChevronDown, Library, LogOut, Moon, Plus, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme.js";
+import Logo from "@/components/ui/Logo.jsx";
+
+// Where each kind of visitor can go. Phones show these in a tab bar at the bottom instead.
+function navItems(user) {
+  if (!user) return [];
+  const items = [
+    { to: "/books", label: "Catalogue", icon: Library },
+    { to: "/loans", label: user.is_librarian ? "Loans" : "My loans", icon: BookMarked },
+  ];
+  if (user.is_librarian) items.push({ to: "/add-book", label: "Add book", icon: Plus });
+  return items;
+}
+
+function Avatar({ name }) {
+  return (
+    <span className="w-8 h-8 rounded-full bg-(--color-accent-soft) text-(--color-accent) flex items-center justify-center text-sm font-semibold uppercase">
+      {name.slice(0, 1)}
+    </span>
+  );
+}
+
+function AccountMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const role = user.is_librarian ? "Librarian" : "Reader";
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) setOpen(false);
+    };
+    const onKey = (event) => event.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Account"
+        className="flex items-center gap-2 rounded-full p-0.5 sm:pr-2.5 hover:bg-(--color-muted) transition-colors"
+      >
+        <Avatar name={user.username} />
+        <span className="hidden sm:flex flex-col items-start leading-tight">
+          <span className="text-sm font-semibold text-(--color-foreground) max-w-[9rem] truncate">{user.username}</span>
+          <span className="text-[0.7rem] text-(--color-muted-foreground)">{role}</span>
+        </span>
+        <ChevronDown className={`hidden sm:block w-3.5 h-3.5 text-(--color-muted-foreground) transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div role="menu" className="animate-fade-in absolute right-0 mt-2 w-60 panel shadow-(--shadow-lg) p-1.5 z-50">
+          <div className="flex items-center gap-3 px-2.5 py-2">
+            <Avatar name={user.username} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-(--color-foreground) truncate">{user.username}</p>
+              <span className={`badge ${user.is_librarian ? "badge-accent" : "badge-muted"}`}>{role}</span>
+            </div>
+          </div>
+          <div className="my-1 border-t border-(--color-border)" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={onLogout}
+            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-(--radius-control) text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
+          >
+            <LogOut className="w-4 h-4 text-(--color-muted-foreground)" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
-  const isLibrarian = Boolean(user?.is_librarian);
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const items = navItems(user);
 
   const handleLogout = () => {
     logout();
-    setMobileMenuOpen(false);
     navigate("/login");
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-(--color-card)/90 backdrop-blur-md border-b border-(--color-border)">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex justify-between h-15 items-center gap-4">
+    <>
+      <header className="sticky top-0 z-40 bg-(--color-background)/80 backdrop-blur-lg border-b border-(--color-border)">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
+          <Link to="/books" aria-label="Book Inventory, home" className="shrink-0 rounded-(--radius-control)">
+            <Logo />
+          </Link>
 
-          {/* Logo */}
-          <button
-            onClick={() => { navigate("/books"); setMobileMenuOpen(false); }}
-            className="flex items-center gap-2.5 shrink-0 group"
-          >
-            {/* Icon mark */}
-            <div className="w-7 h-7 rounded flex items-center justify-center bg-(--color-primary) shadow-sm group-hover:bg-(--color-primary-hover) transition-colors">
-              <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" aria-hidden="true">
-                <rect x="2" y="2" width="5" height="12" rx="1" fill="white" opacity="0.9"/>
-                <rect x="9" y="2" width="5" height="12" rx="1" fill="white" opacity="0.55"/>
-                <rect x="3" y="5" width="3" height="0.75" rx="0.375" fill="var(--color-gold)"/>
-                <rect x="3" y="7" width="3" height="0.75" rx="0.375" fill="var(--color-gold)" opacity="0.6"/>
-              </svg>
-            </div>
-            {/* Wordmark */}
-            <div className="flex flex-col leading-none">
-              <span className="font-serif text-base font-semibold text-(--color-foreground) tracking-tight group-hover:text-(--color-primary-hover) transition-colors">
-                Book Inventory
-              </span>
-              <span className="text-[0.6rem] uppercase tracking-[0.18em] text-(--color-gold) font-medium">
-                Collection
-              </span>
-            </div>
-          </button>
-
-          {/* Desktop right */}
-          <div className="hidden sm:flex items-center gap-3">
-            {/* Theme toggle */}
-            <button
-              onClick={toggle}
-              aria-label="Toggle theme"
-              className="p-2 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-(--color-muted-foreground) hover:text-(--color-foreground)"
-            >
-              {theme === "dark"
-                ? <Sun className="w-4 h-4" />
-                : <Moon className="w-4 h-4" />
-              }
-            </button>
-
-            {user ? (
-              <>
-                <Link
-                  to="/loans"
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-(--radius) text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
+          {items.length > 0 && (
+            <nav aria-label="Main" className="hidden md:flex items-center gap-1">
+              {items.map(({ to, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-(--color-muted) text-(--color-foreground)"
+                        : "text-(--color-muted-foreground) hover:text-(--color-foreground)"
+                    }`
+                  }
                 >
-                  <BookMarked className="w-4 h-4 text-(--color-gold)" aria-hidden="true" />
-                  Loans
-                </Link>
-                {isLibrarian && (
-                  <Link
-                    to="/add-book"
-                    className="btn-primary flex items-center gap-1.5 text-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Book
-                  </Link>
-                )}
-
-                {/* User dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors"
-                  >
-                    <div className="w-8 h-8 bg-(--color-muted) rounded-full flex items-center justify-center ring-1 ring-(--color-border)">
-                      <User className="w-4 h-4 text-(--color-muted-foreground)" />
-                    </div>
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 text-(--color-muted-foreground) transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-1.5 w-52 bg-(--color-card) border border-(--color-border) rounded-(--radius) shadow-md z-50 py-1 overflow-hidden">
-                      <div className="px-3.5 py-2 border-b border-(--color-border)">
-                        <p className="text-sm font-medium text-(--color-foreground) truncate">{user.username}</p>
-                        <p className="text-xs text-(--color-muted-foreground)">{isLibrarian ? "Librarian" : "Reader"}</p>
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
-                      >
-                        <LogOut className="w-3.5 h-3.5 text-(--color-muted-foreground)" />
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <Link to="/login" className="btn-primary text-sm">
-                Sign in
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile controls */}
-          <div className="flex sm:hidden items-center gap-2">
-            {user ? (
-              isLibrarian ? (
-                <Link to="/add-book" aria-label="Add Book" className="btn-primary p-2">
-                  <Plus className="w-4 h-4" />
-                </Link>
-              ) : (
-                <Link to="/loans" aria-label="Loans" className="btn-primary p-2">
-                  <BookMarked className="w-4 h-4" />
-                </Link>
-              )
-            ) : (
-              <Link to="/login" className="btn-primary px-3 py-1.5 text-sm">
-                Sign in
-              </Link>
-            )}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-(--radius) hover:bg-(--color-muted) transition-colors"
-            >
-              {mobileMenuOpen
-                ? <X className="w-5 h-5 text-(--color-foreground)" />
-                : <Menu className="w-5 h-5 text-(--color-foreground)" />
-              }
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden border-t border-(--color-border) bg-(--color-card)/95 backdrop-blur-md px-4 py-2">
-          <button
-            onClick={() => { navigate("/books"); setMobileMenuOpen(false); }}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-          >
-            My Books
-          </button>
-          {user && (
-            <Link
-              to="/loans"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-            >
-              <BookMarked className="w-4 h-4 text-(--color-gold)" />
-              Loans
-            </Link>
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
           )}
-          {isLibrarian && (
-            <Link
-              to="/add-book"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-            >
-              <Plus className="w-4 h-4 text-(--color-gold)" />
-              Add Book
-            </Link>
-          )}
-          <div className="border-t border-(--color-border) mt-1 pt-1">
-            <button
-              onClick={toggle}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-            >
-              {theme === "dark"
-                ? <Sun className="w-4 h-4 text-(--color-muted-foreground)" />
-                : <Moon className="w-4 h-4 text-(--color-muted-foreground)" />
-              }
-              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+
+          <div className="ml-auto flex items-center gap-1.5">
+            <button type="button" onClick={toggle} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} className="icon-btn">
+              {theme === "dark" ? <Sun className="w-[1.1rem] h-[1.1rem]" /> : <Moon className="w-[1.1rem] h-[1.1rem]" />}
             </button>
             {user ? (
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-              >
-                <LogOut className="w-4 h-4 text-(--color-muted-foreground)" />
-                Log out {user.username} ({isLibrarian ? "librarian" : "reader"})
-              </button>
+              <AccountMenu user={user} onLogout={handleLogout} />
             ) : (
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
-              >
-                <User className="w-4 h-4 text-(--color-muted-foreground)" />
-                Sign in
-              </Link>
+              <Link to="/login" className="btn btn-primary">Sign in</Link>
             )}
           </div>
         </div>
+      </header>
+
+      {/* Phones: the main places, always within thumb reach */}
+      {items.length > 0 && (
+        <nav
+          aria-label="Main"
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-(--color-surface)/90 backdrop-blur-lg border-t border-(--color-border) pb-[env(safe-area-inset-bottom)]"
+        >
+          <div className="flex">
+            {items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-2 text-[0.7rem] font-medium transition-colors ${
+                    isActive ? "text-(--color-accent)" : "text-(--color-muted-foreground)"
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5" aria-hidden="true" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
       )}
-    </nav>
+    </>
   );
 }

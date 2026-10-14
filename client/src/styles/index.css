@@ -1,121 +1,330 @@
 @import "tailwindcss";
 
-/* Tailwind's `font-serif` utility reads this token. A plain `.font-serif` rule in
-   @layer base loses to the utility, so Cormorant Garamond never applied. */
+/* `dark:` follows the theme switch (data-theme on <html>), not only the system setting */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Tailwind's `font-serif` and `font-sans` utilities read these tokens */
 @theme {
-  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
+  color-scheme: light;
+
   /* Backgrounds */
-  --color-background: #f0e8d5;
-  --color-surface: #f7f2e6;
-  --color-card: #faf6ec;
+  --color-background: #f7f6f3;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
 
   /* Text */
-  --color-foreground: #1a110a;
-  --color-muted-foreground: #7c6a56;
+  --color-foreground: #1c1917;
+  --color-muted-foreground: #6f6a63;
 
-  /* Brand */
-  --color-primary: #2c1a0e;
-  --color-primary-hover: #4a2d18;
-  --color-primary-foreground: #fdf6e3;
+  /* Buttons: ink on paper */
+  --color-primary: #1c1917;
+  --color-primary-hover: #3a3532;
+  --color-primary-foreground: #ffffff;
+
+  /* Accent: links, focus, "yours", the active tab */
+  --color-accent: #0f766e;
+  --color-accent-soft: #e6f4f1;
+  --color-accent-foreground: #ffffff;
 
   /* UI */
-  --color-muted: #e5d9c3;
-  --color-border: #d8cab0;
-  --color-border-strong: #b89f7e;
+  --color-muted: #f1efea;
+  --color-border: #e7e3dc;
+  --color-border-strong: #cfc8bc;
 
-  /* Accent */
-  --color-gold: #c9952a;
+  /* Status */
+  --color-success: #15803d;
+  --color-success-soft: #e8f5ec;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e2;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fcebea;
 
   /* Shape */
-  --radius: 0.625rem;
+  --radius: 0.875rem;
+  --radius-control: 0.5rem;
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(44, 26, 14, 0.10), 0 1px 2px rgba(44, 26, 14, 0.06);
-  --shadow-md: 0 6px 20px rgba(44, 26, 14, 0.12), 0 2px 6px rgba(44, 26, 14, 0.08);
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.06), 0 1px 3px rgba(28, 25, 23, 0.08);
+  --shadow-md: 0 4px 12px rgba(28, 25, 23, 0.08), 0 2px 4px rgba(28, 25, 23, 0.05);
+  --shadow-lg: 0 18px 40px rgba(28, 25, 23, 0.14), 0 4px 10px rgba(28, 25, 23, 0.06);
+  --shadow-cover: 0 10px 24px -8px rgba(28, 25, 23, 0.35), 0 2px 6px rgba(28, 25, 23, 0.12);
 }
 
-/* ── Dark mode — only when manually toggled ───────────────── */
 [data-theme="dark"] {
-  --color-background:         #0f0d0b;
-  --color-surface:            #171310;
-  --color-card:               #1e1a16;
-  --color-foreground:         #f0e6d4;
-  --color-muted-foreground:   #8a7460;
-  --color-primary:            #c9952a;
-  --color-primary-hover:      #e0a820;
-  --color-primary-foreground: #1a0f07;
-  --color-muted:              #2a2218;
-  --color-border:             #2e2620;
-  --color-border-strong:      #4a3e32;
-  --color-gold:               #e8b84b;
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+
+  --color-background: #0e0e10;
+  --color-surface: #161618;
+  --color-card: #1a1a1d;
+  --color-foreground: #f2f1ef;
+  --color-muted-foreground: #a19d97;
+  --color-primary: #f2f1ef;
+  --color-primary-hover: #d9d6d1;
+  --color-primary-foreground: #0e0e10;
+  --color-accent: #2dd4bf;
+  --color-accent-soft: rgba(45, 212, 191, 0.12);
+  --color-accent-foreground: #0e0e10;
+  --color-muted: #232326;
+  --color-border: #2b2b2f;
+  --color-border-strong: #45454b;
+  --color-success: #4ade80;
+  --color-success-soft: rgba(74, 222, 128, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.12);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.6);
+  --shadow-cover: 0 10px 24px -8px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     scrollbar-gutter: stable;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html, body, #root {
-    height: 100%;
+    min-height: 100%;
   }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: "DM Sans", sans-serif;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   ::selection {
-    background: rgba(201, 149, 42, 0.25);
+    background: color-mix(in srgb, var(--color-accent) 25%, transparent);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    border-radius: var(--radius);
   }
 
-  .card {
-    background-color: var(--color-card);
-    border-radius: var(--radius);
-    border: 1px solid var(--color-border);
-    padding: 0.7rem;
-    color: var(--color-foreground);
-    box-shadow: var(--shadow-sm);
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
   }
+}
 
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+@layer components {
+  /* ── Buttons ─────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
   }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-primary {
     background-color: var(--color-primary);
     color: var(--color-primary-foreground);
+  }
+  .btn-primary:hover:not(:disabled) { background-color: var(--color-primary-hover); }
+
+  .btn-accent {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+  .btn-accent:hover:not(:disabled) { filter: brightness(1.08); }
+
+  .btn-secondary {
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--color-border-strong); }
+
+  .btn-ghost {
+    color: var(--color-muted-foreground);
+  }
+  .btn-ghost:hover:not(:disabled) { background-color: var(--color-muted); color: var(--color-foreground); }
+
+  .btn-danger {
+    color: var(--color-danger);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  }
+  .btn-danger:hover:not(:disabled) { background-color: var(--color-danger-soft); }
+
+  .btn-danger-solid {
+    background-color: var(--color-danger);
+    color: #fff;
+  }
+  .btn-danger-solid:hover:not(:disabled) { filter: brightness(1.08); }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    color: var(--color-muted-foreground);
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .icon-btn:hover { background-color: var(--color-muted); color: var(--color-foreground); }
+
+  /* ── Forms ───────────────────────────────────────────── */
+  .field-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+    margin-bottom: 0.35rem;
+  }
+
+  .input {
+    width: 100%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
+    border-radius: var(--radius-control);
+    padding: 0.6rem 0.85rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input::placeholder { color: var(--color-muted-foreground); opacity: 0.8; }
+  .input:hover { border-color: var(--color-border-strong); }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+
+  /* ── Surfaces ────────────────────────────────────────── */
+  .panel {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: 0.5rem 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8125rem;
     font-weight: 500;
-    transition:
-      background-color 0.2s ease,
-      transform 0.1s ease;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .chip:hover { border-color: var(--color-border-strong); }
+  .chip[aria-pressed="true"] {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-foreground);
   }
 
-  .btn-primary:hover {
-    background-color: var(--color-primary-hover);
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.1rem;
+    white-space: nowrap;
+  }
+  .badge-success { background-color: var(--color-success-soft); color: var(--color-success); }
+  .badge-warning { background-color: var(--color-warning-soft); color: var(--color-warning); }
+  .badge-danger { background-color: var(--color-danger-soft); color: var(--color-danger); }
+  .badge-accent { background-color: var(--color-accent-soft); color: var(--color-accent); }
+  .badge-muted { background-color: var(--color-muted); color: var(--color-muted-foreground); }
+
+  /* A badge laid over a cover image */
+  .badge-on-cover {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  [data-theme="dark"] .badge-on-cover { background-color: rgba(22, 22, 24, 0.88); }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
   }
 
-  .btn-primary:active {
-    transform: scale(0.97);
+  .cover-shadow { box-shadow: var(--shadow-cover); }
+
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  /* ── Motion ──────────────────────────────────────────── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-muted) 0%, color-mix(in srgb, var(--color-muted) 55%, var(--color-surface)) 50%, var(--color-muted) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in-up 0.35s ease both;
+  }
+
+  .animate-sheet-in {
+    animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .animate-backdrop-in {
+    animation: fade-in 0.2s ease both;
+  }
+
+  .animate-toast-in {
+    animation: fade-in-up 0.25s ease both;
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Phones: up from the bottom; wider screens: a gentle scale-in */
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .animate-fade-in, .animate-sheet-in, .animate-backdrop-in, .animate-toast-in {
+    animation: none;
   }
 }

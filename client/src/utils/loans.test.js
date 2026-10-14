@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { borrowBook, dueLabel, fetchLoans, returnLoan } from "./loans.js";
+import { borrowBook, dueLabel, dueTone, fetchLoans, loanProgress, returnLoan } from "./loans.js";
 
 describe("dueLabel", () => {
   const now = new Date(2026, 9, 14, 15, 0); // 14 Oct, 3 pm local time
@@ -16,6 +16,39 @@ describe("dueLabel", () => {
     assert.equal(dueLabel(at(14, 9), now), "Overdue today");
     assert.equal(dueLabel(at(13, 23), now), "1 day overdue");
     assert.equal(dueLabel(at(10), now), "4 days overdue");
+  });
+});
+
+describe("dueTone", () => {
+  const now = new Date(2026, 9, 14, 15, 0);
+  const at = (day, hour = 9) => new Date(2026, 9, day, hour, 0).toISOString();
+
+  it("is overdue once the due time has passed, even on the same day", () => {
+    assert.equal(dueTone(at(14, 9), now), "overdue");
+    assert.equal(dueTone(at(1), now), "overdue");
+  });
+
+  it("is soon within two calendar days, and ok after that", () => {
+    assert.equal(dueTone(at(14, 20), now), "soon");
+    assert.equal(dueTone(at(16, 23), now), "soon");
+    assert.equal(dueTone(at(17, 1), now), "ok");
+  });
+});
+
+describe("loanProgress", () => {
+  const borrowed = new Date(2026, 9, 1).toISOString();
+  const due = new Date(2026, 9, 15).toISOString();
+
+  it("runs from 0 when borrowed to 1 when due", () => {
+    assert.equal(loanProgress(borrowed, due, new Date(2026, 9, 1)), 0);
+    assert.equal(loanProgress(borrowed, due, new Date(2026, 9, 8)), 0.5);
+    assert.equal(loanProgress(borrowed, due, new Date(2026, 9, 15)), 1);
+  });
+
+  it("stays within 0 and 1", () => {
+    assert.equal(loanProgress(borrowed, due, new Date(2026, 8, 1)), 0);
+    assert.equal(loanProgress(borrowed, due, new Date(2026, 10, 1)), 1);
+    assert.equal(loanProgress(due, borrowed, new Date(2026, 9, 8)), 1);
   });
 });
 
@@ -69,10 +102,13 @@ describe("loan requests", () => {
     await fetchLoans("http://api.test/api");
     reply = new Response(JSON.stringify({ results: [] }));
     await fetchLoans("http://api.test/api", { scope: "all", status: "overdue", page: 2 });
+    reply = new Response(JSON.stringify({ results: [] }));
+    await fetchLoans("http://api.test/api", { scope: "all", status: "overdue", pageSize: 1 });
 
     assert.deepEqual(calls.map((c) => c.url), [
       "http://api.test/api/loans/?scope=mine&status=active",
       "http://api.test/api/loans/?scope=all&status=overdue&page=2",
+      "http://api.test/api/loans/?scope=all&status=overdue&page_size=1",
     ]);
   });
 

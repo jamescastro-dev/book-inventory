@@ -76,11 +76,11 @@ export default function BarcodeScanner({ onDetected, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-label="Scan a barcode"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-(--color-surface) rounded-(--radius) shadow-lg border border-(--color-border) overflow-hidden"
+        className="animate-sheet-in relative w-full max-w-md bg-(--color-surface) rounded-[1.25rem] shadow-(--shadow-lg) overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -96,20 +96,20 @@ export default function BarcodeScanner({ onDetected, onClose }) {
           <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
           {!failed && (
             // a guide for lining the barcode up
-            <div aria-hidden="true" className="absolute inset-x-[10%] top-1/2 -translate-y-1/2 h-[28%] border-2 border-white/80 rounded-md">
-              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500/80" />
+            <div aria-hidden="true" className="absolute inset-x-[10%] top-1/2 -translate-y-1/2 h-[28%] border-2 border-white/80 rounded-lg">
+              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-(--color-accent)" />
             </div>
           )}
         </div>
 
         <div className="p-4 text-center">
-          <p role={failed ? "alert" : "status"} className={`text-sm ${failed ? "text-red-700" : "text-(--color-muted-foreground)"}`}>
+          <p role={failed ? "alert" : "status"} className={`text-sm ${failed ? "text-(--color-danger)" : "text-(--color-muted-foreground)"}`}>
             {message}
           </p>
           <button
             type="button"
             onClick={onClose}
-            className="mt-3 px-4 py-2 text-sm rounded-(--radius) font-medium bg-(--color-muted) text-(--color-foreground) hover:bg-(--color-border) transition-colors"
+            className="btn btn-secondary mt-3"
           >
             {failed ? "Close" : "Cancel"}
           </button>
