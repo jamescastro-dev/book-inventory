@@ -1,3 +1,7 @@
+import logging
+
+import cloudinary.exceptions
+from django.db import transaction
 from django.db.models import Count, F, Min
 from django.utils import timezone
 from django.db.models.functions import Lower
@@ -23,6 +27,25 @@ INVALID = OpenApiResponse(description='Validation errors by field, e.g. `{"image
 NOT_FOUND = OpenApiResponse(description="No book with this id.")
 NOT_LIBRARIAN = OpenApiResponse(description="Signed in, but only librarians can do this.")
 RULE_BROKEN = OpenApiResponse(description="A lending rule says no; `detail` says which (e.g. all copies are on loan).")
+COVER_NOT_STORED = OpenApiResponse(description="The cover image couldn't be stored, so nothing was saved.")
+
+logger = logging.getLogger(__name__)
+
+
+def save_book(serializer, success_status):
+    """Save a valid BookSerializer. If the cover upload fails, nothing is saved (the file is stored
+    before the row is written) and the reader gets a message instead of a server error."""
+    try:
+        with transaction.atomic():  # a savepoint, so the failure can't spoil an enclosing transaction
+            serializer.save()
+    except cloudinary.exceptions.Error:
+        logger.exception("Couldn't store a cover image")
+        return Response(
+            {"detail": "The cover image couldn't be saved, so the book wasn't either. Try again, or save it without a cover."},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+    return Response(serializer.data, status=success_status)
+
 
 # ---------------- Book Views ----------------
 @extend_schema_view(get=extend_schema(
@@ -116,15 +139,14 @@ def lookup_book(request):
     summary="Create a book",
     description="Send JSON, or a multipart form to include a cover `image` (at most 5 MB).",
     request=BookSerializer,
-    responses={201: BookSerializer, 400: INVALID, 401: UNAUTHORIZED, 403: NOT_LIBRARIAN},
+    responses={201: BookSerializer, 400: INVALID, 401: UNAUTHORIZED, 403: NOT_LIBRARIAN, 502: COVER_NOT_STORED},
 )
 @api_view(['POST'])
 @permission_classes([IsLibrarian])
 def create_book(request):
     serializer = BookSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return save_book(serializer, status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
@@ -132,7 +154,7 @@ def create_book(request):
     summary="Update a book",
     description="Partial updates are allowed: send only the fields to change.",
     request=BookSerializer,
-    responses={200: BookSerializer, 400: INVALID, 401: UNAUTHORIZED, 403: NOT_LIBRARIAN, 404: NOT_FOUND},
+    responses={200: BookSerializer, 400: INVALID, 401: UNAUTHORIZED, 403: NOT_LIBRARIAN, 404: NOT_FOUND, 502: COVER_NOT_STORED},
 )
 @extend_schema(
     methods=['DELETE'],
@@ -162,8 +184,7 @@ def book_detail(request, pk):
     elif request.method == 'PUT':
         serializer = BookSerializer(book, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            return save_book(serializer, status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

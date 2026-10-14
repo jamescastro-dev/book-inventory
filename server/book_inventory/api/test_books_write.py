@@ -1,5 +1,6 @@
 import io
 
+import cloudinary.exceptions
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.storage import Storage
@@ -35,6 +36,16 @@ DISCARD_UPLOADS = {
     "default": {"BACKEND": f"{__name__}.DiscardingStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+
+
+class RefusingStorage(DiscardingStorage):
+    """Cloudinary turning an upload down (bad credentials, outage, rate limit)."""
+
+    def _save(self, name, content):
+        raise cloudinary.exceptions.AuthorizationRequired("Invalid api_key")
+
+
+REFUSE_UPLOADS = {**DISCARD_UPLOADS, "default": {"BACKEND": f"{__name__}.RefusingStorage"}}
 
 
 def png(size=None):
@@ -169,6 +180,31 @@ class BookWriteTests(APITestCase):
         response = self.client.put(self.detail_url, {"title": "Renamed", "image": png(MAX_COVER_BYTES + 1)}, format="multipart")
 
         self.assertEqual(response.status_code, 400)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.title, "Original")
+        self.assertFalse(self.book.image)
+
+    # ---- when the cover can't be stored ----
+
+    @override_settings(STORAGES=REFUSE_UPLOADS)
+    def test_a_refused_cover_upload_saves_nothing_and_says_why(self):
+        self.sign_in()
+
+        with self.assertLogs("book_inventory.api.views", "ERROR"):
+            response = self.client.post(self.create_url, {"title": "Unlucky", "author": "x", "release_year": 2001, "image": png()}, format="multipart")
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("cover image couldn't be saved", response.data["detail"])
+        self.assertFalse(Book.objects.filter(title="Unlucky").exists())
+
+    @override_settings(STORAGES=REFUSE_UPLOADS)
+    def test_a_refused_cover_on_edit_leaves_the_book_unchanged(self):
+        self.sign_in()
+
+        with self.assertLogs("book_inventory.api.views", "ERROR"):
+            response = self.client.put(self.detail_url, {"title": "Renamed", "image": png()}, format="multipart")
+
+        self.assertEqual(response.status_code, 502)
         self.book.refresh_from_db()
         self.assertEqual(self.book.title, "Original")
         self.assertFalse(self.book.image)
