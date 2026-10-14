@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { ScanBarcode, Search } from "lucide-react";
-import { fetchCoverFile, lookupIsbn } from "@/utils/bookLookup.js";
+import { fetchCoverFile, isbnFromText, lookupIsbn } from "@/utils/bookLookup.js";
 import { canScan } from "@/utils/barcode.js";
 
 const API_URL = import.meta.env.VITE_API_BOOKS_URL;
@@ -56,7 +56,7 @@ export default function IsbnLookup({ onFound }) {
             Quick fill from an ISBN
           </label>
           <p className="mt-0.5 text-sm text-(--color-muted-foreground)">
-            Optional. Type the ISBN{scanAvailable ? " or scan the barcode" : ""} to fill in the details and cover from Open Library.
+            Optional. Paste or type the ISBN{scanAvailable ? ", or scan the barcode," : ""} to fill in the details and cover from Open Library.
           </p>
         </div>
       </div>
@@ -69,6 +69,16 @@ export default function IsbnLookup({ onFound }) {
           autoComplete="off"
           value={isbn}
           onChange={(e) => setIsbn(e.target.value)}
+          onPaste={(e) => {
+            // Pasting a whole valid ISBN looks it up straight away; anything else just pastes
+            const pasted = e.clipboardData.getData("text");
+            const pastedIsbn = isbnFromText(pasted);
+            if (pastedIsbn) {
+              e.preventDefault();
+              setIsbn(pastedIsbn);
+              search(pastedIsbn);
+            }
+          }}
           onKeyDown={(e) => {
             // Enter should look the book up, not submit the whole form
             if (e.key === "Enter") {

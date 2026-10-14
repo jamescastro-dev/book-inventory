@@ -111,7 +111,7 @@ class ParsingTests(SimpleTestCase):
 class FetchTests(SimpleTestCase):
     """Open Library is replaced by canned replies: these tests never touch the network."""
 
-    def canned(self, data, details=None):
+    def canned(self, data, details=None, work=None):
         def reply(params):
             if params["jscmd"] == "data":
                 if isinstance(data, Exception):
@@ -120,7 +120,60 @@ class FetchTests(SimpleTestCase):
             if isinstance(details, Exception):
                 raise details
             return details or {}
-        return mock.patch.object(lookup, "_get", side_effect=reply)
+        patches = mock.patch.multiple(lookup, _get=mock.DEFAULT, _get_work=mock.DEFAULT)
+
+        class Canned:
+            def __enter__(self_):
+                mocks = patches.__enter__()
+                mocks["_get"].side_effect = reply
+                mocks["_get_work"].side_effect = lambda key: (work or {}) if key else {}  # like the real one: no key, no work
+                self.work_requests = mocks["_get_work"]
+                return mocks["_get"]
+
+            def __exit__(self_, *exc):
+                return patches.__exit__(*exc)
+
+        return Canned()
+
+    # ---- gaps in a sparse edition, filled from its work ----
+
+    SPARSE = {"title": "The Grapes of Wrath", "authors": [{"name": "John Steinbeck"}], "publish_date": "2006"}
+    SPARSE_DETAILS = {"details": {"works": [{"key": "/works/OL23205W"}]}}
+    WORK = {
+        "description": {"type": "/type/text", "value": "Steinbeck's novel of the Great Depression."},
+        "subjects": ["Labor camps", "Classic Literature", "Fiction"],
+        "covers": [-1, 12715902],
+    }
+
+    def test_a_sparse_edition_is_filled_in_from_its_work(self):
+        with self.canned({f"ISBN:{HOBBIT_13}": self.SPARSE}, {f"ISBN:{HOBBIT_13}": self.SPARSE_DETAILS}, self.WORK):
+            book = fetch_book(HOBBIT_13)
+
+        self.work_requests.assert_called_once_with("/works/OL23205W")
+        self.assertEqual(book["description"], "Steinbeck's novel of the Great Depression.")
+        self.assertEqual(book["genre"], "Classic Fiction")
+        self.assertEqual(book["cover_url"], "https://covers.openlibrary.org/b/id/12715902-L.jpg")  # -1 skipped
+        self.assertEqual(book["title"], "The Grapes of Wrath")
+
+    def test_the_editions_own_details_win(self):
+        details = {"details": {**DETAILS_ENTRY["details"], "works": [{"key": "/works/OL1W"}]}}
+        with self.canned({f"ISBN:{HOBBIT_13}": DATA_ENTRY}, {f"ISBN:{HOBBIT_13}": details}, self.WORK):
+            book = fetch_book(HOBBIT_13)
+
+        self.work_requests.assert_not_called()  # nothing was missing
+        self.assertEqual(book["genre"], "Fantasy")
+        self.assertEqual(book["cover_url"], COVER)
+
+    def test_no_work_or_an_unusable_one_leaves_the_edition_as_it_is(self):
+        for details in ({}, {f"ISBN:{HOBBIT_13}": {"details": {"works": [{"key": "https://evil.example/x"}]}}}):
+            with self.canned({f"ISBN:{HOBBIT_13}": self.SPARSE}, details, self.WORK):
+                book = fetch_book(HOBBIT_13)
+            self.assertEqual((book["description"], book["genre"], book["cover_url"]), ("", None, None))
+
+    def test_a_failed_work_request_is_not_an_error(self):
+        with mock.patch.object(lookup.requests, "get", side_effect=requests.ConnectionError("down")):
+            self.assertEqual(lookup._get_work("/works/OL23205W"), {})
+        self.assertEqual(lookup._get_work(None), {})
 
     def test_both_isbn_forms_are_asked_for_in_one_request_each(self):
         with self.canned({f"ISBN:{HOBBIT_13}": DATA_ENTRY}, {f"ISBN:{HOBBIT_13}": DETAILS_ENTRY}) as get:

@@ -158,8 +158,51 @@ def fetch_book(isbn):
     for variant in variants:
         entry = data.get(f"ISBN:{variant}")
         if isinstance(entry, dict) and entry.get("title"):
-            return parse_book(variants[0], entry, details.get(f"ISBN:{variant}"))
+            edition_details = details.get(f"ISBN:{variant}")
+            book = parse_book(variants[0], entry, edition_details)
+            if not (book["description"] and book["genre"] and book["cover_url"]):
+                fill_from_work(book, _get_work(_work_key(edition_details)))
+            return book
     return None
+
+
+# ---------------------------------------------------------------- the work behind an edition
+
+# An ISBN names one edition, and editions are often sparse: no description, no subjects, no cover.
+# Open Library keeps those on the "work" (the book itself, shared by all its editions), so gaps are
+# filled from there. The edition's own values always win.
+
+def _work_key(edition_details):
+    """The edition's work, e.g. "/works/OL23205W", from its "details" entry; None if it has none."""
+    works = ((edition_details or {}).get("details") or {}).get("works") or []
+    key = works[0].get("key") if works and isinstance(works[0], dict) else None
+    return key if isinstance(key, str) and re.fullmatch(r"/works/OL\d+W", key) else None
+
+
+def _get_work(key):
+    """The work's record, or {} if there is no key or it can't be had (the edition alone still counts)."""
+    if not key:
+        return {}
+    try:
+        response = requests.get(f"https://openlibrary.org{key}.json", headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT)
+        response.raise_for_status()
+        work = response.json()
+    except (requests.RequestException, ValueError):
+        return {}
+    return work if isinstance(work, dict) else {}
+
+
+def fill_from_work(book, work):
+    """Fill the gaps in `book` (from parse_book) from its work's record: description, genre, cover."""
+    if not book["description"]:
+        book["description"] = clean_description(work.get("description"))
+    if not book["genre"]:
+        book["genre"] = suggest_genre([s for s in work.get("subjects", []) if isinstance(s, str)])
+    if not book["cover_url"]:
+        covers = [c for c in work.get("covers", []) if isinstance(c, int) and c > 0]  # -1 marks a deleted cover
+        if covers:
+            book["cover_url"] = f"{COVER_HOST}b/id/{covers[0]}-L.jpg"
+    return book
 
 
 COVER_TIMEOUT = (3, 20)  # covers are bigger than the JSON replies

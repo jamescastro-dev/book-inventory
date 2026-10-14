@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { fetchCoverFile, lookupIsbn } from "./bookLookup.js";
+import { fetchCoverFile, isbnFromText, lookupIsbn } from "./bookLookup.js";
 import { MAX_COVER_BYTES } from "./uploads.js";
 
 // The helpers use the browser's fetch, localStorage and window, so give them small stand-ins
@@ -103,5 +103,23 @@ describe("fetchCoverFile", () => {
   it("accepts a cover of exactly the size limit", async () => {
     reply = image(MAX_COVER_BYTES);
     assert.equal((await fetchCoverFile("https://covers.test/a", "1")).size, MAX_COVER_BYTES);
+  });
+});
+
+describe("isbnFromText", () => {
+  it("accepts ISBN-13 and ISBN-10 with hyphens, spaces or an ISBN label", () => {
+    assert.equal(isbnFromText("978-0-547-92822-7"), "9780547928227");
+    assert.equal(isbnFromText(" 978 0547 928227 "), "9780547928227");
+    assert.equal(isbnFromText("054792822x"), "054792822X");
+    assert.equal(isbnFromText("ISBN-13: 9780547928227"), "9780547928227");
+  });
+
+  it("rejects a wrong check digit, other numbers and other text", () => {
+    assert.equal(isbnFromText("9780547928228"), null);
+    assert.equal(isbnFromText("0547928221"), null);
+    assert.equal(isbnFromText("9790547928227"), null); // 979 needs its own valid check digit
+    assert.equal(isbnFromText("12345"), null);
+    assert.equal(isbnFromText("The Hobbit"), null);
+    assert.equal(isbnFromText(undefined), null);
   });
 });
