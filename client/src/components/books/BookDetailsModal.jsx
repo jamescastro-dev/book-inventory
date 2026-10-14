@@ -68,6 +68,14 @@ const BookDetailsModal = ({ book, isOpen, onClose, children }) => {
                 <dd className="text-(--color-foreground) font-medium">{book.release_year}</dd>
               </div>
             )}
+            {book.copies != null && (
+              <div className="flex gap-2">
+                <dt className="text-(--color-muted-foreground) w-20 shrink-0">Copies</dt>
+                <dd className="text-(--color-foreground) font-medium">
+                  {book.available_copies} of {book.copies} on the shelf
+                </dd>
+              </div>
+            )}
           </dl>
 
           {book.description && (
@@ -76,7 +84,12 @@ const BookDetailsModal = ({ book, isOpen, onClose, children }) => {
             </p>
           )}
 
-          {children && <div className="mt-auto pt-4">{children}</div>}
+          {/* Actions stay in view at the bottom while a long description scrolls */}
+          {children && (
+            <div className="mt-auto sticky -bottom-7 -mx-7 px-7 pt-1 pb-7 -mb-7 bg-(--color-surface) border-t border-transparent">
+              {children}
+            </div>
+          )}
         </div>
       </div>
     </div>

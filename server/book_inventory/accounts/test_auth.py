@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -45,7 +46,13 @@ class CurrentUserTests(AuthTestCase):
         response = self.client.get(reverse("me"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"id": self.user.id, "username": "reader", "email": "reader@example.com"})
+        self.assertEqual(response.data, {"id": self.user.id, "username": "reader", "email": "reader@example.com", "is_librarian": False})
+
+    def test_says_when_the_user_is_a_librarian(self):
+        self.user.groups.add(Group.objects.create(name="Librarians"))
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.log_in().data['access']}")
+
+        self.assertTrue(self.client.get(reverse("me")).data["is_librarian"])
 
 
 class TokenRefreshTests(AuthTestCase):

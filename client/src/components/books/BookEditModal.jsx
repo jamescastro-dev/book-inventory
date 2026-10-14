@@ -9,6 +9,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
   const [genre, setGenre] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
   const [description, setDescription] = useState("");
+  const [copies, setCopies] = useState("1");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
 
@@ -24,6 +25,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
       setGenre(book.genre || "");
       setReleaseYear(book.release_year || "");
       setDescription(book.description || "");
+      setCopies(String(book.copies ?? 1));
       setImage(null);
       setPreview(book.image_thumb || book.image || "");
     }
@@ -50,6 +52,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
     formData.append("genre", genre);
     formData.append("release_year", releaseYear);
     formData.append("description", description);
+    formData.append("copies", parseInt(copies, 10) || 1);
     if (image) formData.append("image", image);
     onSave(formData);
   };
@@ -59,6 +62,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
     { label: "Author",       value: author,      set: setAuthor,      type: "text",   required: true  },
     { label: "Genre",        value: genre,       set: setGenre,       type: "text",   required: false },
     { label: "Release Year", value: releaseYear, set: setReleaseYear, type: "number", required: false },
+    { label: "Copies",       value: copies,      set: setCopies,      type: "number", required: true, min: 1 },
   ];
 
   return (
@@ -135,7 +139,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
 
           {/* Fields */}
           <div className="flex-1 flex flex-col gap-3.5">
-            {fields.map(({ label, value, set, type, required }) => (
+            {fields.map(({ label, value, set, type, required, min }) => (
               <div key={label} className="flex flex-col gap-1">
                 <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
                   {label}
@@ -146,6 +150,7 @@ const BookEditModal = ({ book, isOpen, onClose, onSave }) => {
                   value={value}
                   onChange={(e) => set(e.target.value)}
                   placeholder={label}
+                  min={min}
                   className="
                     bg-(--color-card) border border-(--color-border)
                     text-(--color-foreground) text-sm

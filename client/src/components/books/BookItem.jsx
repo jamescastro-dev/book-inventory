@@ -1,17 +1,45 @@
 import { useContext, useState } from "react";
+import { Link } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext.jsx";
 import BookEditModal from "@/components/books/BookEditModal.jsx";
 import BookDetailsModal from "@/components/books/BookDetailsModal.jsx";
 import DeleteConfirmation from "@/components/ui/DeleteModal.jsx";
+import { dueLabel } from "@/utils/loans.js";
 
-const BookItem = ({ book, onUpdate, onDelete }) => {
+// "2 of 3 available", "On loan to you" or "All copies on loan", with a coloured dot
+export function Availability({ book, myLoan, className = "" }) {
+  const [dot, text] = myLoan
+    ? ["bg-(--color-gold)", "On loan to you"]
+    : book.available_copies > 0
+      ? ["bg-green-600", `${book.available_copies} of ${book.copies} available`]
+      : ["bg-red-600", "All copies on loan"];
+  return (
+    <p className={`flex items-center gap-1.5 text-[0.7rem] text-(--color-muted-foreground) ${className}`}>
+      <span aria-hidden="true" className={`inline-block w-1.5 h-1.5 rounded-full ${dot}`} />
+      {text}
+    </p>
+  );
+}
+
+const BookItem = ({ book, myLoan, onUpdate, onDelete, onBorrow, onReturn }) => {
   const { user } = useContext(AuthContext);
+  const isLibrarian = Boolean(user?.is_librarian);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const handleSave = (updatedBook) => {
     onUpdate(book.id, updatedBook);
     setIsEditModalOpen(false);
+  };
+
+  const run = async (action) => {
+    setBusy(true);
+    try {
+      await action();
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -67,6 +95,7 @@ const BookItem = ({ book, onUpdate, onDelete }) => {
               {book.author}
             </p>
           )}
+          <Availability book={book} myLoan={myLoan} className="mt-1" />
         </div>
       </div>
 
@@ -76,21 +105,56 @@ const BookItem = ({ book, onUpdate, onDelete }) => {
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
         >
-          {user && (
-            <div className="mt-6 flex justify-end gap-2">
-              <DeleteConfirmation
-                onConfirm={() => onDelete(book.id)}
-                buttonText="Delete"
-                className="text-sm"
-              />
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+            {!user && (
+              <Link to="/login" className="text-sm font-medium underline underline-offset-4 decoration-(--color-gold) text-(--color-foreground) hover:text-(--color-gold)">
+                Sign in to borrow
+              </Link>
+            )}
+
+            {user && myLoan && (
+              <>
+                <span className={`mr-auto text-sm ${myLoan.is_overdue ? "text-red-700 font-medium" : "text-(--color-muted-foreground)"}`}>
+                  {dueLabel(myLoan.due_at)}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => run(() => onReturn(book, myLoan))}
+                  className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                >
+                  {busy ? "Returning…" : "Return"}
+                </button>
+              </>
+            )}
+
+            {user && !myLoan && (
               <button
-                onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
-                className="btn-primary px-4 py-2 text-sm"
+                type="button"
+                disabled={busy || book.available_copies < 1}
+                onClick={() => run(() => onBorrow(book))}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Edit
+                {book.available_copies < 1 ? "All copies on loan" : busy ? "Borrowing…" : "Borrow"}
               </button>
-            </div>
-          )}
+            )}
+
+            {isLibrarian && (
+              <>
+                <DeleteConfirmation
+                  onConfirm={() => onDelete(book.id)}
+                  buttonText="Delete"
+                  className="text-sm"
+                />
+                <button
+                  onClick={() => { setIsEditModalOpen(true); setIsDetailsModalOpen(false); }}
+                  className="px-4 py-2 text-sm rounded-(--radius) font-medium border border-(--color-border) text-(--color-foreground) hover:border-(--color-border-strong) transition-colors"
+                >
+                  Edit
+                </button>
+              </>
+            )}
+          </div>
         </BookDetailsModal>
       )}
 

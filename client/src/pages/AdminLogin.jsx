@@ -2,9 +2,11 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
 
-// Public demo account (created by `python manage.py seed_demo`)
-const DEMO_USERNAME = "demo";
-const DEMO_PASSWORD = "Library-Demo-2026";
+// Public demo accounts (created by `python manage.py seed_demo`)
+const DEMO_ACCOUNTS = [
+  { role: "Librarian", username: "demo", password: "Library-Demo-2026", can: "adds and edits books, sees everyone's loans" },
+  { role: "Reader", username: "reader", password: "Reader-Demo-2026", can: "borrows and returns books" },
+];
 
 const AdminLogin = () => {
   const { login, error, user, loading: authLoading, sessionExpired } = useContext(AuthContext);
@@ -25,9 +27,9 @@ const AdminLogin = () => {
     setLoading(false);
   };
 
-  const fillDemoLogin = () => {
-    setUsername(DEMO_USERNAME);
-    setPassword(DEMO_PASSWORD);
+  const fillDemoLogin = (account) => {
+    setUsername(account.username);
+    setPassword(account.password);
   };
 
   if (authLoading) {
@@ -126,24 +128,33 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          {/* Demo account */}
+          {/* Demo accounts */}
           <div className="mt-6 rounded-(--radius) border border-dashed border-(--color-border-strong) bg-(--color-surface) px-4 py-3.5">
             <p className="text-xs font-medium tracking-widest uppercase text-(--color-gold)">
-              Demo account
+              Demo accounts
             </p>
-            <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-              <dt className="text-(--color-muted-foreground)">Username</dt>
-              <dd className="font-mono text-(--color-foreground) break-all">{DEMO_USERNAME}</dd>
-              <dt className="text-(--color-muted-foreground)">Password</dt>
-              <dd className="font-mono text-(--color-foreground) break-all">{DEMO_PASSWORD}</dd>
-            </dl>
-            <button
-              type="button"
-              onClick={fillDemoLogin}
-              className="mt-3 text-sm font-medium text-(--color-foreground) underline underline-offset-4 decoration-(--color-gold) hover:text-(--color-gold) transition-colors"
-            >
-              Use demo login
-            </button>
+            <ul className="mt-2.5 flex flex-col gap-3">
+              {DEMO_ACCOUNTS.map((account) => (
+                <li key={account.username} className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 text-sm">
+                    <p className="font-medium text-(--color-foreground)">
+                      {account.role} <span className="font-normal text-(--color-muted-foreground)">· {account.can}</span>
+                    </p>
+                    <p className="font-mono text-(--color-foreground) break-all">
+                      {account.username} / {account.password}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fillDemoLogin(account)}
+                    aria-label={`Use the ${account.role.toLowerCase()} demo login`}
+                    className="shrink-0 text-sm font-medium text-(--color-foreground) underline underline-offset-4 decoration-(--color-gold) hover:text-(--color-gold) transition-colors"
+                  >
+                    Use
+                  </button>
+                </li>
+              ))}
+            </ul>
             <p className="mt-2 text-xs leading-relaxed text-(--color-muted-foreground)">
               The free server sleeps when idle, so the first sign-in can take up to a minute.
             </p>

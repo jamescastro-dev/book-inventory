@@ -1,6 +1,7 @@
 import io
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.storage import Storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -9,7 +10,8 @@ from PIL import Image
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Book
+from .models import Book, Loan
+from .permissions import LIBRARIANS_GROUP
 from .serializers import MAX_COVER_BYTES
 
 
@@ -48,17 +50,28 @@ def png(size=None):
 @override_settings(STORAGES=DISCARD_UPLOADS)
 class BookWriteTests(APITestCase):
     def setUp(self):
-        # A plain account, like the demo user: no staff or superuser rights
+        # A librarian like the demo account: in the Librarians group, but no staff or superuser rights
         self.user = get_user_model().objects.create_user("editor", password="a-long-test-password-1")
+        self.user.groups.add(Group.objects.get_or_create(name=LIBRARIANS_GROUP)[0])
+        self.reader = get_user_model().objects.create_user("reader", password="a-long-test-password-1")
         self.book = Book.objects.create(title="Original", author="Someone", genre="Fantasy", release_year=1999, description="Text")
         self.create_url = reverse("create_book")
         self.detail_url = reverse("book_detail", args=[self.book.pk])
 
-    def sign_in(self):
-        token = RefreshToken.for_user(self.user).access_token
+    def sign_in(self, user=None):
+        token = RefreshToken.for_user(user or self.user).access_token
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
     # ---- who may write ----
+
+    def test_readers_cannot_create_edit_or_delete_books(self):
+        self.sign_in(self.reader)
+
+        self.assertEqual(self.client.post(self.create_url, {"title": "New", "author": "x", "release_year": 2000}, format="json").status_code, 403)
+        self.assertEqual(self.client.put(self.detail_url, {"title": "Changed"}, format="json").status_code, 403)
+        self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
+        self.book.refresh_from_db()
+        self.assertEqual((Book.objects.count(), self.book.title), (1, "Original"))
 
     def test_plain_accounts_are_not_staff(self):
         self.assertFalse(self.user.is_staff or self.user.is_superuser)
@@ -201,3 +214,49 @@ class BookWriteTests(APITestCase):
 
         self.assertEqual(self.client.delete(reverse("book_detail", args=[9999])).status_code, 404)
         self.assertEqual(Book.objects.count(), 1)
+
+
+    # ---- copies and loans ----
+
+    def lend(self, book, times=1):
+        for n in range(times):
+            borrower = get_user_model().objects.create_user(f"borrower{n}")
+            Loan.objects.create(book=book, borrower=borrower, due_at="2099-01-01T00:00:00Z")
+
+    def test_copies_can_be_set_and_must_be_at_least_one(self):
+        self.sign_in()
+
+        self.assertEqual(self.client.put(self.detail_url, {"copies": 3}, format="json").status_code, 200)
+        self.assertEqual(self.client.put(self.detail_url, {"copies": 0}, format="json").status_code, 400)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.copies, 3)
+
+    def test_copies_cannot_drop_below_those_on_loan(self):
+        self.book.copies = 3
+        self.book.save()
+        self.lend(self.book, times=2)
+        self.sign_in()
+
+        refused = self.client.put(self.detail_url, {"copies": 1}, format="json")
+        allowed = self.client.put(self.detail_url, {"copies": 2}, format="json")
+
+        self.assertEqual(refused.status_code, 400)
+        self.assertIn("2 copies are on loan", refused.data["copies"][0])
+        self.assertEqual((allowed.status_code, allowed.data["available_copies"]), (200, 0))
+
+    def test_a_book_with_copies_on_loan_cannot_be_deleted(self):
+        self.lend(self.book)
+        self.sign_in()
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(Book.objects.filter(pk=self.book.pk).exists())
+
+    def test_a_book_whose_loans_are_all_returned_can_be_deleted_with_its_history(self):
+        self.lend(self.book)
+        Loan.objects.update(returned_at="2026-01-01T00:00:00Z")
+        self.sign_in()
+
+        self.assertEqual(self.client.delete(self.detail_url).status_code, 204)
+        self.assertEqual(Loan.objects.count(), 0)

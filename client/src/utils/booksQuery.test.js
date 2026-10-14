@@ -14,6 +14,11 @@ describe("buildBooksQuery", () => {
     assert.equal(buildBooksQuery({ sort: "-title", page: 3 }), "ordering=-title&page=3");
   });
 
+  it("asks for books on the shelf only when that box is ticked", () => {
+    assert.equal(buildBooksQuery({ availableOnly: true }), "available=true");
+    assert.equal(buildBooksQuery({ availableOnly: false }), "");
+  });
+
   it("trims the search and ignores a blank one", () => {
     assert.equal(buildBooksQuery({ search: "  the hobbit " }), "search=the+hobbit");
     assert.equal(buildBooksQuery({ search: "   " }), "");

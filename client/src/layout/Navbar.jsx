@@ -1,11 +1,12 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext.jsx";
-import { User, ChevronDown, LogOut, Plus, Menu, X, Sun, Moon } from "lucide-react";
+import { User, ChevronDown, LogOut, Plus, Menu, X, Sun, Moon, BookMarked } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme.js";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const isLibrarian = Boolean(user?.is_librarian);
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -75,12 +76,21 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
-                  to="/add-book"
-                  className="btn-primary flex items-center gap-1.5 text-sm"
+                  to="/loans"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-(--radius) text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Book
+                  <BookMarked className="w-4 h-4 text-(--color-gold)" aria-hidden="true" />
+                  Loans
                 </Link>
+                {isLibrarian && (
+                  <Link
+                    to="/add-book"
+                    className="btn-primary flex items-center gap-1.5 text-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Book
+                  </Link>
+                )}
 
                 {/* User dropdown */}
                 <div className="relative" ref={dropdownRef}>
@@ -97,7 +107,11 @@ export default function Navbar() {
                   </button>
 
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-1.5 w-44 bg-(--color-card) border border-(--color-border) rounded-(--radius) shadow-md z-50 py-1 overflow-hidden">
+                    <div className="absolute right-0 mt-1.5 w-52 bg-(--color-card) border border-(--color-border) rounded-(--radius) shadow-md z-50 py-1 overflow-hidden">
+                      <div className="px-3.5 py-2 border-b border-(--color-border)">
+                        <p className="text-sm font-medium text-(--color-foreground) truncate">{user.username}</p>
+                        <p className="text-xs text-(--color-muted-foreground)">{isLibrarian ? "Librarian" : "Reader"}</p>
+                      </div>
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-(--color-foreground) hover:bg-(--color-muted) transition-colors"
@@ -119,12 +133,15 @@ export default function Navbar() {
           {/* Mobile controls */}
           <div className="flex sm:hidden items-center gap-2">
             {user ? (
-              <Link
-                to="/add-book"
-                className="btn-primary p-2"
-              >
-                <Plus className="w-4 h-4" />
-              </Link>
+              isLibrarian ? (
+                <Link to="/add-book" aria-label="Add Book" className="btn-primary p-2">
+                  <Plus className="w-4 h-4" />
+                </Link>
+              ) : (
+                <Link to="/loans" aria-label="Loans" className="btn-primary p-2">
+                  <BookMarked className="w-4 h-4" />
+                </Link>
+              )
             ) : (
               <Link to="/login" className="btn-primary px-3 py-1.5 text-sm">
                 Sign in
@@ -155,6 +172,16 @@ export default function Navbar() {
           </button>
           {user && (
             <Link
+              to="/loans"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
+            >
+              <BookMarked className="w-4 h-4 text-(--color-gold)" />
+              Loans
+            </Link>
+          )}
+          {isLibrarian && (
+            <Link
               to="/add-book"
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
@@ -180,7 +207,7 @@ export default function Navbar() {
                 className="flex items-center gap-3 w-full px-3 py-2.5 rounded-(--radius) hover:bg-(--color-muted) transition-colors text-sm font-medium text-(--color-foreground)"
               >
                 <LogOut className="w-4 h-4 text-(--color-muted-foreground)" />
-                Logout
+                Log out {user.username} ({isLibrarian ? "librarian" : "reader"})
               </button>
             ) : (
               <Link

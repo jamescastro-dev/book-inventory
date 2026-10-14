@@ -10,11 +10,12 @@ export const SORT_OPTIONS = [
 ];
 
 // Query string for GET /api/books/, leaving out everything that is at its default.
-export function buildBooksQuery({ search = "", genre = "", sort = "", page = 1 } = {}) {
+export function buildBooksQuery({ search = "", genre = "", sort = "", availableOnly = false, page = 1 } = {}) {
   const params = new URLSearchParams();
   if (search.trim()) params.set("search", search.trim());
   if (genre) params.set("genre", genre);
   if (sort) params.set("ordering", sort);
+  if (availableOnly) params.set("available", "true");
   if (page > 1) params.set("page", String(page));
   return params.toString();
 }

@@ -36,3 +36,7 @@ class BookPagination(PageNumberPagination):
                 "results": schema,
             },
         }
+
+
+class LoanPagination(BookPagination):
+    page_size = 20

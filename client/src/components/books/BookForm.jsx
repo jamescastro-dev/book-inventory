@@ -9,6 +9,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
   const [genre, setGenre] = useState(initialData.genre || "");
   const [releaseYear, setReleaseYear] = useState(initialData.release_year || "");
   const [description, setDescription] = useState(initialData.description || "");
+  const [copies, setCopies] = useState(String(initialData.copies ?? 1));
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(initialData.image || "");
   const [imageError, setImageError] = useState("");
@@ -44,13 +45,14 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
     formData.append("genre", genre.trim());
     formData.append("release_year", parseInt(releaseYear, 10));
     formData.append("description", description.trim());
+    formData.append("copies", parseInt(copies, 10) || 1);
     if (image) formData.append("image", image);
 
     onAdd(formData);
 
     if (!initialData.id) {
       setTitle(""); setAuthor(""); setGenre("");
-      setReleaseYear(""); setDescription("");
+      setReleaseYear(""); setDescription(""); setCopies("1");
       setImage(null); setPreview("");
     }
   };
@@ -60,6 +62,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
     { label: "Author",       value: author,      set: setAuthor,      type: "text",   required: true  },
     { label: "Genre",        value: genre,       set: setGenre,       type: "text",   required: false },
     { label: "Release Year", value: releaseYear, set: setReleaseYear, type: "number", required: true  },
+    { label: "Copies",       value: copies,      set: setCopies,      type: "number", required: true, min: 1 },
   ];
 
   return (
@@ -131,7 +134,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
 
           {/* Fields */}
           <div className="flex-1 flex flex-col gap-4">
-            {fields.map(({ label, value, set, type, required }) => (
+            {fields.map(({ label, value, set, type, required, min }) => (
               <div key={label} className="flex flex-col gap-1">
                 <label className="text-xs font-medium tracking-widest uppercase text-(--color-muted-foreground)">
                   {label}
@@ -143,6 +146,7 @@ export default function BookForm({ onAdd, initialData = {}, onCancel }) {
                   onChange={(e) => set(e.target.value)}
                   placeholder={label}
                   required={required}
+                  min={min}
                   className="
                     bg-(--color-card) border border-(--color-border)
                     text-(--color-foreground) text-sm

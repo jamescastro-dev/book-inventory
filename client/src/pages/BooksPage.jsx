@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
+import { AuthContext } from "@/context/AuthContext.jsx";
 import BookItem from "@/components/books/BookItem.jsx";
 import SearchBar from "@/components/books/SearchBar.jsx";
 import BookFilters from "@/components/books/BookFilters.jsx";
@@ -7,6 +8,7 @@ import { authFetch } from "@/utils/authFetch.js";
 import { readApiError } from "@/utils/uploads.js";
 import { buildBooksQuery } from "@/utils/booksQuery.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
+import { borrowBook, fetchLoans, returnLoan, shortDate } from "@/utils/loans.js";
 
 const BooksPage = () => {
   // One page of results from the API: { count, page, page_size, total_pages, results }. Null until the first load.
@@ -19,6 +21,10 @@ const BooksPage = () => {
   const [searchText, setSearchText] = useState("");
   const [genre, setGenre] = useState("");
   const [sort, setSort] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
+  // The signed-in user's books on loan, by book id
+  const [myLoans, setMyLoans] = useState({});
+  const { user } = useContext(AuthContext);
   const abortRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_BOOKS_URL;
@@ -28,7 +34,7 @@ const BooksPage = () => {
 
   // A page number only makes sense for one combination of search/genre/sort, so changing
   // any of them starts again at page 1.
-  const filterKey = JSON.stringify([search, genre, sort]);
+  const filterKey = JSON.stringify([search, genre, sort, availableOnly]);
   const [pageState, setPageState] = useState({ key: filterKey, page: 1 });
   if (pageState.key !== filterKey) setPageState({ key: filterKey, page: 1 }); // adjust during render, not in an effect
   const page = pageState.key === filterKey ? pageState.page : 1;
@@ -42,7 +48,7 @@ const BooksPage = () => {
     setFetching(true);
     try {
       // Reading is public, so send no token: an expired one would make the API answer 401.
-      const res = await fetch(`${API_URL}/books/?${buildBooksQuery({ search, genre, sort, page })}`, {
+      const res = await fetch(`${API_URL}/books/?${buildBooksQuery({ search, genre, sort, availableOnly, page })}`, {
         signal: controller.signal,
       });
       if (res.status === 404 && page > 1) {
@@ -60,7 +66,7 @@ const BooksPage = () => {
     } finally {
       if (abortRef.current === controller) setFetching(false);
     }
-  }, [API_URL, search, genre, sort, page, goToPage]);
+  }, [API_URL, search, genre, sort, availableOnly, page, goToPage]);
 
   const fetchGenres = useCallback(async () => {
     try {
@@ -77,6 +83,21 @@ const BooksPage = () => {
   }, [fetchBooks]);
 
   useEffect(() => { fetchGenres(); }, [fetchGenres]);
+
+  const fetchMyLoans = useCallback(async () => {
+    if (!user) {
+      setMyLoans({});
+      return;
+    }
+    try {
+      const data = await fetchLoans(API_URL, { status: "active" });
+      setMyLoans(Object.fromEntries(data.results.map((loan) => [loan.book.id, loan])));
+    } catch (err) {
+      console.error(err); // the buttons fall back to Borrow; the API still enforces the rules
+    }
+  }, [API_URL, user]);
+
+  useEffect(() => { fetchMyLoans(); }, [fetchMyLoans]);
 
   useEffect(() => {
     if (success) {
@@ -115,13 +136,43 @@ const BooksPage = () => {
       const res = await authFetch(`${API_URL}/books/${id}/`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete book");
+      if (!res.ok) {
+        // e.g. 409: copies are still on loan
+        setActionError(await readApiError(res, "Failed to delete book."));
+        return;
+      }
       setActionError("");
     } catch (err) {
       console.error(err);
       setActionError("Failed to delete book.");
     } finally {
       refresh(); // pull in the next book to fill the page, or restore the one that failed to delete
+    }
+  };
+
+  const handleBorrow = async (book) => {
+    try {
+      const loan = await borrowBook(API_URL, book.id);
+      setSuccess(`Borrowed “${book.title}”. It’s due back on ${shortDate(loan.due_at)}.`);
+      setActionError("");
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      refresh();
+      fetchMyLoans();
+    }
+  };
+
+  const handleReturn = async (book, loan) => {
+    try {
+      await returnLoan(API_URL, loan.id);
+      setSuccess(`Returned “${book.title}”. Thank you!`);
+      setActionError("");
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      refresh();
+      fetchMyLoans();
     }
   };
 
@@ -133,11 +184,12 @@ const BooksPage = () => {
   const clearFilters = () => {
     setSearchText("");
     setGenre("");
+    setAvailableOnly(false);
   };
 
   const books = data?.results ?? [];
   const error = actionError || loadError;
-  const isFiltering = search.length > 0 || genre !== "";
+  const isFiltering = search.length > 0 || genre !== "" || availableOnly;
   const showSkeleton = data === null && !loadError;
   const showEmpty = data !== null && books.length === 0;
 
@@ -147,10 +199,10 @@ const BooksPage = () => {
       {/* Header */}
       <div className="bg-(--color-surface) border-b border-(--color-border)">
         <div className="max-w-6xl mx-auto px-5 py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
 
             {/* Title + stats — centered on mobile */}
-            <div className="text-center md:text-left">
+            <div className="text-center lg:text-left">
               <h1 className="font-serif text-2xl font-semibold text-(--color-foreground) tracking-tight leading-none">
                 My Library
               </h1>
@@ -167,7 +219,7 @@ const BooksPage = () => {
             </div>
 
             {/* Search, genre filter and sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center md:justify-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap sm:items-center sm:justify-center lg:justify-end gap-2">
               <div className="w-full sm:w-64">
                 <SearchBar value={searchText} onChange={(e) => setSearchText(e.target.value)} />
               </div>
@@ -177,6 +229,8 @@ const BooksPage = () => {
                 onGenreChange={setGenre}
                 sort={sort}
                 onSortChange={setSort}
+                availableOnly={availableOnly}
+                onAvailableOnlyChange={setAvailableOnly}
               />
             </div>
 
@@ -224,7 +278,14 @@ const BooksPage = () => {
                 style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
                 className="animate-fade-in"
               >
-                <BookItem book={book} onUpdate={updateBook} onDelete={deleteBook} />
+                <BookItem
+                  book={book}
+                  myLoan={myLoans[book.id]}
+                  onUpdate={updateBook}
+                  onDelete={deleteBook}
+                  onBorrow={handleBorrow}
+                  onReturn={handleReturn}
+                />
               </div>
             ))}
           </div>

@@ -26,6 +26,9 @@ class ApiDocsTests(TestCase):
             "/api/books/genres/",
             "/api/books/lookup/",
             "/api/books/{id}/",
+            "/api/books/{id}/borrow/",
+            "/api/loans/",
+            "/api/loans/{id}/return/",
         })
 
     def test_docs_page_is_public_and_serves_swagger_ui_from_this_server(self):

@@ -4,6 +4,7 @@ import Navbar from "@/layout/Navbar";
 import BooksPage from "@/pages/BooksPage";
 import AddBook from "@/pages/AddBook";
 import AdminLogin from "@/pages/AdminLogin";
+import LoansPage from "@/pages/LoansPage";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 function App() {
@@ -24,8 +25,16 @@ function App() {
         <Route
           path="/add-book"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute librarianOnly>
               <AddBook />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/loans"
+          element={
+            <ProtectedRoute>
+              <LoansPage />
             </ProtectedRoute>
           }
         />

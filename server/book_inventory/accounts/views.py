@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from book_inventory.api.permissions import is_librarian
+
 from .throttles import LoginBurstThrottle, LoginSustainedThrottle
 
 
@@ -48,6 +50,7 @@ class MeView(APIView):
                 "id": serializers.IntegerField(),
                 "username": serializers.CharField(),
                 "email": serializers.CharField(),
+                "is_librarian": serializers.BooleanField(help_text="Can manage books and see everyone's loans"),
             }),
             401: OpenApiResponse(description="Missing, invalid or expired access token."),
         },
@@ -58,4 +61,5 @@ class MeView(APIView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
+            "is_librarian": is_librarian(user),
         })

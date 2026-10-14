@@ -29,12 +29,12 @@ const Select = ({ label, value, onChange, children }) => (
   </label>
 );
 
-const BookFilters = ({ genres, genre, onGenreChange, sort, onSortChange }) => {
+const BookFilters = ({ genres, genre, onGenreChange, sort, onSortChange, availableOnly, onAvailableOnlyChange }) => {
   // Keep the chosen genre selectable even if the genre list has not loaded (or no longer has it)
   const listed = genres.some((g) => g.name.toLowerCase() === genre.toLowerCase());
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
       <Select label="Filter by genre" value={genre} onChange={(e) => onGenreChange(e.target.value)}>
         <option value="">All genres</option>
         {genre && !listed && <option value={genre}>{genre}</option>}
@@ -47,6 +47,15 @@ const BookFilters = ({ genres, genre, onGenreChange, sort, onSortChange }) => {
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </Select>
+      <label className="w-full sm:w-auto flex items-center gap-2 text-sm text-(--color-foreground) cursor-pointer select-none whitespace-nowrap px-1">
+        <input
+          type="checkbox"
+          checked={availableOnly}
+          onChange={(e) => onAvailableOnlyChange(e.target.checked)}
+          className="w-4 h-4 accent-(--color-primary)"
+        />
+        Available now
+      </label>
     </div>
   );
 };

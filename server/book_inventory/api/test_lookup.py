@@ -2,6 +2,7 @@ from unittest import mock
 
 import requests
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -9,6 +10,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from . import lookup
+from .permissions import LIBRARIANS_GROUP
 from .lookup import (
     LookupUnavailable, clean_description, extract_year, fetch_book, isbn_variants,
     lookup_isbn, normalize_isbn, parse_book, suggest_genre,
@@ -204,7 +206,9 @@ class LookupEndpointTests(APITestCase):
         cache.clear()  # the lookup limit is counted in the shared cache
         self.addCleanup(cache.clear)
         user = get_user_model().objects.create_user("editor", password="a-long-test-password-1")
+        user.groups.add(Group.objects.get_or_create(name=LIBRARIANS_GROUP)[0])
         self.token = RefreshToken.for_user(user).access_token
+        self.reader_token = RefreshToken.for_user(get_user_model().objects.create_user("reader")).access_token
         self.url = reverse("lookup_book")
         self.found = parse_book(HOBBIT_13, DATA_ENTRY, DETAILS_ENTRY)
 
@@ -217,6 +221,13 @@ class LookupEndpointTests(APITestCase):
     def test_needs_a_token(self):
         with mock.patch("book_inventory.api.views.lookup_isbn") as search:
             self.assertEqual(self.get().status_code, 401)
+
+        search.assert_not_called()
+
+    def test_is_for_librarians_only(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.reader_token}")
+        with mock.patch("book_inventory.api.views.lookup_isbn") as search:
+            self.assertEqual(self.get().status_code, 403)
 
         search.assert_not_called()
 

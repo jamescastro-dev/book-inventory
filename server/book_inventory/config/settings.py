@@ -197,6 +197,9 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
+# Borrowing: how many days a loan lasts before it is overdue
+LOAN_DAYS = 14
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
