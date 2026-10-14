@@ -148,5 +148,317 @@
     "created_at": "2026-03-10T08:17:29.035Z",
     "updated_at": "2026-03-10T08:21:47.201Z"
   }
+},
+{
+  "model": "api.book",
+  "pk": 11,
+  "fields": {
+    "title": "The Fellowship of the Ring",
+    "author": "J.R.R. Tolkien",
+    "genre": "Fantasy",
+    "release_year": 1954,
+    "description": "Frodo Baggins inherits a plain gold ring that turns out to be the One Ring of the Dark Lord Sauron. With eight companions he sets out from the Shire to destroy it in the fires where it was forged. The first part of The Lord of the Rings, it moves from cosy hobbit holes to the mines of Moria and the breaking of the fellowship.",
+    "isbn": "9780547928210",
+    "copies": 3
+  }
+},
+{
+  "model": "api.book",
+  "pk": 12,
+  "fields": {
+    "title": "A Game of Thrones",
+    "author": "George R.R. Martin",
+    "genre": "Fantasy",
+    "release_year": 1996,
+    "description": "When Lord Eddard Stark is summoned south to serve the king, his family is drawn into a deadly struggle for the Iron Throne. Far to the north, an ancient threat stirs beyond the Wall, and across the sea an exiled princess plans her return. Told through many points of view, it is a sprawling tale of power, loyalty and betrayal.",
+    "isbn": "9780553593716",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 13,
+  "fields": {
+    "title": "The Catcher in the Rye",
+    "author": "J.D. Salinger",
+    "genre": "Classic Fiction",
+    "release_year": 1951,
+    "description": "Expelled from his prep school, sixteen-year-old Holden Caulfield spends a few aimless days in New York City before going home. His sharp, funny and wounded voice rails against the phoniness of the adult world while he struggles with grief and loneliness. It remains one of the defining novels of adolescence.",
+    "isbn": "9780316769488",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 14,
+  "fields": {
+    "title": "Brave New World",
+    "author": "Aldous Huxley",
+    "genre": "Dystopian Fiction",
+    "release_year": 1932,
+    "description": "In the World State, people are engineered in hatcheries, conditioned from birth and kept content with pleasure and the drug soma. When Bernard Marx brings a young man raised outside the system back to London, its comforts start to look like a cage. Huxley's vision of a society controlled by happiness rather than fear still feels startlingly current.",
+    "isbn": "9780060850524",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 15,
+  "fields": {
+    "title": "Fahrenheit 451",
+    "author": "Ray Bradbury",
+    "genre": "Dystopian Fiction",
+    "release_year": 1953,
+    "description": "Guy Montag is a fireman, and in his world firemen burn books. A chance meeting with a curious young neighbour makes him question everything he has been taught. Bradbury's short, urgent novel is a warning about censorship and a culture that would rather be entertained than think.",
+    "isbn": "9781451673319",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 16,
+  "fields": {
+    "title": "The Handmaid's Tale",
+    "author": "Margaret Atwood",
+    "genre": "Dystopian Fiction",
+    "release_year": 1985,
+    "description": "In the Republic of Gilead, a theocracy that has replaced the United States, Offred is a Handmaid whose only purpose is to bear children for a powerful Commander. She remembers a time when she had a job, a family and her own name. Quiet, precise and chilling, the novel shows how quickly freedoms can be taken away.",
+    "isbn": "9780385490818",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 17,
+  "fields": {
+    "title": "Foundation",
+    "author": "Isaac Asimov",
+    "genre": "Science Fiction",
+    "release_year": 1951,
+    "description": "Mathematician Hari Seldon predicts that the Galactic Empire will fall and thirty thousand years of chaos will follow. To shorten the dark age he founds a colony of scholars at the edge of the galaxy. The stories that follow trace how reason, trade and cunning keep his plan alive across generations.",
+    "isbn": "9780553293357",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 18,
+  "fields": {
+    "title": "Neuromancer",
+    "author": "William Gibson",
+    "genre": "Science Fiction",
+    "release_year": 1984,
+    "description": "Case was the best hacker in the business until he crossed the wrong people and lost the ability to jack into cyberspace. A mysterious employer offers to repair him in exchange for one more job. Gibson's debut coined much of the language of cyberpunk and imagined the networked world before it existed.",
+    "isbn": "9780441569595",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 19,
+  "fields": {
+    "title": "The Martian",
+    "author": "Andy Weir",
+    "genre": "Science Fiction",
+    "release_year": 2011,
+    "description": "After a dust storm forces his crew to evacuate, astronaut Mark Watney is left for dead on Mars. With limited supplies and no way to call home, he has to science his way to survival, one problem at a time. Funny and fiercely practical, it is a celebration of ingenuity under pressure.",
+    "isbn": "9780553418026",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 20,
+  "fields": {
+    "title": "Project Hail Mary",
+    "author": "Andy Weir",
+    "genre": "Science Fiction",
+    "release_year": 2021,
+    "description": "Ryland Grace wakes up alone on a spaceship with no memory of how he got there or why. Slowly he remembers that he is humanity's last chance to stop a microbe that is dimming the Sun. An unexpected friendship far from home turns a survival story into something warmer.",
+    "isbn": "9780593135204",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 21,
+  "fields": {
+    "title": "Educated",
+    "author": "Tara Westover",
+    "genre": "Non-Fiction",
+    "release_year": 2018,
+    "description": "Tara Westover grew up in the mountains of Idaho, in a survivalist family that kept her out of school and away from doctors. She taught herself enough to get into university, and went on to earn a PhD from Cambridge. Her memoir is about the cost of leaving home, and what it takes to see the world for yourself.",
+    "isbn": "9780399590511",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 22,
+  "fields": {
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "genre": "Non-Fiction",
+    "release_year": 2018,
+    "description": "Small habits, repeated every day, add up to remarkable results. James Clear explains how habits form and gives practical ways to make good ones easier and bad ones harder. The book focuses on systems rather than goals, and on becoming the kind of person who does the thing.",
+    "isbn": "9780735211292",
+    "copies": 3
+  }
+},
+{
+  "model": "api.book",
+  "pk": 23,
+  "fields": {
+    "title": "Thinking, Fast and Slow",
+    "author": "Daniel Kahneman",
+    "genre": "Non-Fiction",
+    "release_year": 2011,
+    "description": "Nobel laureate Daniel Kahneman describes two ways of thinking: a fast, intuitive system and a slow, deliberate one. He shows how the fast system leads us into predictable errors when we judge risk, plan, or make choices. Drawing on decades of research, it changes how you see your own decisions.",
+    "isbn": "9780374533557",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 24,
+  "fields": {
+    "title": "The Road",
+    "author": "Cormac McCarthy",
+    "genre": "Fiction",
+    "release_year": 2006,
+    "description": "A father and his young son walk south through a burned and empty America, pushing a shopping cart of supplies and avoiding the people who remain. They have nothing but each other and the idea that they are carrying the fire. Spare and devastating, it won the Pulitzer Prize.",
+    "isbn": "9780307387899",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 25,
+  "fields": {
+    "title": "The Kite Runner",
+    "author": "Khaled Hosseini",
+    "genre": "Fiction",
+    "release_year": 2003,
+    "description": "Amir, the son of a wealthy man in Kabul, grows up alongside Hassan, his father's servant's son and his closest friend. One act of cowardice in the winter of 1975 haunts him for decades, through war, exile and a new life in America. A story of friendship, guilt and the chance to be good again.",
+    "isbn": "9781594631931",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 26,
+  "fields": {
+    "title": "Jane Eyre",
+    "author": "Charlotte Brontë",
+    "genre": "Classic Fiction",
+    "release_year": 1847,
+    "description": "Orphaned and mistreated as a child, Jane Eyre becomes a governess at Thornfield Hall, where she falls in love with its brooding master, Mr Rochester. A secret in the house threatens everything. Brontë's heroine, plain, poor and fiercely independent, insists on being treated as an equal.",
+    "isbn": "9780141441146",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 27,
+  "fields": {
+    "title": "Moby-Dick",
+    "author": "Herman Melville",
+    "genre": "Classic Fiction",
+    "release_year": 1851,
+    "description": "Ishmael signs on to the whaling ship Pequod, only to discover that Captain Ahab has one goal: revenge on the white whale that took his leg. The voyage becomes an obsession that will consume the ship and its crew. Part adventure, part encyclopaedia of the sea, it is one of the great American novels.",
+    "isbn": "9780142437247",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 28,
+  "fields": {
+    "title": "The Girl with the Dragon Tattoo",
+    "author": "Stieg Larsson",
+    "genre": "Mystery",
+    "release_year": 2005,
+    "description": "Disgraced journalist Mikael Blomkvist is hired by an ageing industrialist to find out what happened to his niece, who vanished forty years ago. He teams up with Lisbeth Salander, a brilliant and guarded hacker. Their investigation uncovers a family's dark secrets and a long trail of violence.",
+    "isbn": "9780307454546",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 29,
+  "fields": {
+    "title": "Gone Girl",
+    "author": "Gillian Flynn",
+    "genre": "Mystery",
+    "release_year": 2012,
+    "description": "On the morning of their fifth wedding anniversary, Amy Dunne disappears, and her husband Nick quickly becomes the prime suspect. Told in turns by Nick and by Amy's diary, the story keeps changing shape. A sharp, twisting thriller about marriage and the stories people tell about themselves.",
+    "isbn": "9780307588371",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 30,
+  "fields": {
+    "title": "And Then There Were None",
+    "author": "Agatha Christie",
+    "genre": "Mystery",
+    "release_year": 1939,
+    "description": "Ten strangers are invited to an island off the Devon coast, each with a past they would rather forget. Cut off from the mainland, they begin to die one by one, following the lines of an old nursery rhyme. Christie's best-selling mystery is a masterclass in tension.",
+    "isbn": "9780062073488",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 31,
+  "fields": {
+    "title": "The Night Circus",
+    "author": "Erin Morgenstern",
+    "genre": "Fantasy",
+    "release_year": 2011,
+    "description": "The circus arrives without warning and is open only at night, its black-and-white tents full of impossible wonders. Behind the scenes, two young magicians, Celia and Marco, are bound to a contest they don't fully understand. Lush and dreamlike, it is a love story set in a place built of illusions.",
+    "isbn": "9780307744432",
+    "copies": 1
+  }
+},
+{
+  "model": "api.book",
+  "pk": 32,
+  "fields": {
+    "title": "Circe",
+    "author": "Madeline Miller",
+    "genre": "Fantasy",
+    "release_year": 2018,
+    "description": "Born to the sun god Helios, Circe is mocked by her family until she discovers the power of witchcraft. Banished to an island, she meets gods, monsters and mortals, among them Odysseus. Miller retells Greek myth from the point of view of a woman who learns to choose her own fate.",
+    "isbn": "9780316556347",
+    "copies": 2
+  }
+},
+{
+  "model": "api.book",
+  "pk": 33,
+  "fields": {
+    "title": "The Hunger Games",
+    "author": "Suzanne Collins",
+    "genre": "Dystopian Fiction",
+    "release_year": 2008,
+    "description": "In Panem, the Capitol forces each district to send two teenagers to fight to the death on live television. When her younger sister is chosen, Katniss Everdeen volunteers to take her place. Fast-paced and gripping, it is a story about survival, spectacle and defiance.",
+    "isbn": "9780439023528",
+    "copies": 3
+  }
+},
+{
+  "model": "api.book",
+  "pk": 34,
+  "fields": {
+    "title": "Where the Crawdads Sing",
+    "author": "Delia Owens",
+    "genre": "Fiction",
+    "release_year": 2018,
+    "description": "Abandoned by her family, Kya Clark grows up alone in the marshes of North Carolina, learning from the gulls and the tides. Years later, when a local man is found dead, the townspeople suspect the Marsh Girl. Part coming-of-age story and part courtroom drama, it is steeped in the natural world.",
+    "isbn": "9780735219106",
+    "copies": 2
+  }
 }
 ]

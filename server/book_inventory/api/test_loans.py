@@ -257,7 +257,7 @@ class LoanApiTests(APITestCase):
 @override_settings(STORAGES=FAKE_STORAGE)  # the sample books have covers; no Cloudinary account needed
 class SeedDemoAccountsTests(APITestCase):
     def seed(self, *args):
-        call_command("seed_demo", *args, stdout=StringIO())
+        call_command("seed_demo", "--skip-covers", *args, stdout=StringIO())
 
     def test_demo_is_a_librarian_and_reader_is_not(self):
         self.seed()

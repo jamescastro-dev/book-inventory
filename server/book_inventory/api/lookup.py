@@ -162,6 +162,31 @@ def fetch_book(isbn):
     return None
 
 
+COVER_TIMEOUT = (3, 20)  # covers are bigger than the JSON replies
+MAX_COVER_BYTES = 5 * 1024 * 1024  # the same limit as an uploaded cover
+
+
+def fetch_cover(isbn):
+    """The large cover image for an ISBN (bytes), or None if Open Library has none, or it isn't a
+    usable image. Raises LookupUnavailable if Open Library can't be reached."""
+    try:
+        response = requests.get(
+            f"{COVER_HOST}b/isbn/{isbn}-L.jpg",
+            params={"default": "false"},  # 404 instead of a blank placeholder image
+            headers={"User-Agent": USER_AGENT},
+            timeout=COVER_TIMEOUT,
+        )
+    except requests.RequestException as error:
+        raise LookupUnavailable(str(error)) from error
+    if response.status_code == 404:
+        return None
+    if not response.ok:
+        raise LookupUnavailable(f"covers answered {response.status_code}")
+    if not response.headers.get("Content-Type", "").startswith("image/") or not 0 < len(response.content) <= MAX_COVER_BYTES:
+        return None
+    return response.content
+
+
 def lookup_isbn(isbn):
     """fetch_book with a cache in front, so a repeated ISBN doesn't hit Open Library again."""
     key = f"isbn-lookup:{isbn}"

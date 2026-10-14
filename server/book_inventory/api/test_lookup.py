@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . import lookup
 from .permissions import LIBRARIANS_GROUP
 from .lookup import (
-    LookupUnavailable, clean_description, extract_year, fetch_book, isbn_variants,
+    LookupUnavailable, clean_description, extract_year, fetch_book, fetch_cover, isbn_variants,
     lookup_isbn, normalize_isbn, parse_book, suggest_genre,
 )
 
@@ -172,6 +172,39 @@ class FetchTests(SimpleTestCase):
 
         self.assertIn("book-inventory", get.call_args.kwargs["headers"]["User-Agent"])
         self.assertEqual(get.call_args.kwargs["timeout"], lookup.TIMEOUT)
+
+
+class FetchCoverTests(SimpleTestCase):
+    def reply(self, status=200, content=b"\xff\xd8jpeg", content_type="image/jpeg"):
+        return mock.Mock(status_code=status, ok=200 <= status < 300, content=content, headers={"Content-Type": content_type})
+
+    def test_returns_the_image_from_the_cover_host(self):
+        with mock.patch.object(lookup.requests, "get", return_value=self.reply()) as get:
+            self.assertEqual(fetch_cover(HOBBIT_13), b"\xff\xd8jpeg")
+
+        self.assertEqual(get.call_args.args[0], f"https://covers.openlibrary.org/b/isbn/{HOBBIT_13}-L.jpg")
+        self.assertEqual(get.call_args.kwargs["params"], {"default": "false"})  # no blank placeholder
+        self.assertIn("book-inventory", get.call_args.kwargs["headers"]["User-Agent"])
+        self.assertEqual(get.call_args.kwargs["timeout"], lookup.COVER_TIMEOUT)
+
+    def test_no_cover_is_none(self):
+        with mock.patch.object(lookup.requests, "get", return_value=self.reply(404)):
+            self.assertIsNone(fetch_cover(HOBBIT_13))
+
+    def test_something_that_is_not_a_usable_image_is_none(self):
+        for reply in (
+            self.reply(content_type="text/html"),
+            self.reply(content=b""),
+            self.reply(content=b"x" * (lookup.MAX_COVER_BYTES + 1)),
+        ):
+            with mock.patch.object(lookup.requests, "get", return_value=reply):
+                self.assertIsNone(fetch_cover(HOBBIT_13))
+
+    def test_network_problems_become_lookup_unavailable(self):
+        for kwargs in ({"side_effect": requests.ConnectionError("down")}, {"return_value": self.reply(503)}):
+            with mock.patch.object(lookup.requests, "get", **kwargs):
+                with self.assertRaises(LookupUnavailable):
+                    fetch_cover(HOBBIT_13)
 
 
 class CacheTests(TestCase):
